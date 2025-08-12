@@ -15,16 +15,17 @@ export const getDownloadFilename = (name: string, format: 'png' | 'pdf'): string
 export const downloadOptions = {
   png: {
     quality: 1,
-    bgcolor: '#ffffff',
+    bgcolor: 'transparent', // Transparent background to show card's own background
     style: {
-      // Ensure compatibility with older browsers
-      background: '#ffffff',
+      // Let the card's own background show through
+      background: 'transparent',
       fontFamily: 'system-ui, -apple-system, sans-serif'
     }
   },
   pdf: {
     orientation: 'landscape' as const,
     unit: 'mm' as const,
-    format: 'a4' as const
+    format: 'a4' as const,
+    bgcolor: 'transparent' // Transparent to show card's own background
   }
 };

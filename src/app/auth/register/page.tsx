@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { UserRegistrationResponse } from '@/types/user';
+import LivenessDetection from '@/components/LivenessDetection';
 
 interface FormData {
   firstName: string;
@@ -15,6 +16,7 @@ interface FormData {
   phoneNumber: string;
   nidPhoto: File | null;
   facePhoto: File | null;
+  livenessVerified: boolean;
 }
 
 type RegistrationStep = 'personal' | 'verification' | 'password' | 'complete';
@@ -23,6 +25,16 @@ interface VerificationResult {
   success: boolean;
   message: string;
   confidence?: number;
+}
+
+interface LivenessResult {
+  isLive: boolean;
+  confidence: number;
+  checks: {
+    blinks: number;
+    headMovement: boolean;
+    faceQuality: boolean;
+  };
 }
 
 export default function RegisterPage() {
@@ -36,7 +48,8 @@ export default function RegisterPage() {
     nid: '',
     phoneNumber: '',
     nidPhoto: null,
-    facePhoto: null
+    facePhoto: null,
+    livenessVerified: false
   });
   
   const [currentStep, setCurrentStep] = useState<RegistrationStep>('personal');
@@ -44,6 +57,7 @@ export default function RegisterPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isCapturingFace, setIsCapturingFace] = useState(false);
   const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
+  const [showLivenessDetection, setShowLivenessDetection] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -101,7 +115,12 @@ export default function RegisterPage() {
     }
 
     if (!formData.facePhoto) {
-      setMessage({ type: 'error', text: 'Please capture your face photo for verification' });
+      setMessage({ type: 'error', text: 'Please complete liveness verification' });
+      return;
+    }
+
+    if (!formData.livenessVerified) {
+      setMessage({ type: 'error', text: 'Please complete liveness verification' });
       return;
     }
 
@@ -120,6 +139,16 @@ export default function RegisterPage() {
       const faceFormData = new FormData();
       faceFormData.append('nidPhoto', formData.nidPhoto);
       faceFormData.append('facePhoto', formData.facePhoto);
+      
+      // Ensure liveness verification is properly set
+      const livenessStatus = formData.livenessVerified === true ? 'true' : 'false';
+      faceFormData.append('livenessVerified', livenessStatus);
+      
+      console.log('Registration debug - sending to face verification:', {
+        livenessVerified: formData.livenessVerified,
+        livenessVerifiedString: livenessStatus,
+        formDataState: formData
+      });
 
       const [docResponse, faceResponse] = await Promise.all([
         fetch('/api/auth/validate-document', {
@@ -197,6 +226,16 @@ export default function RegisterPage() {
       formDataToSend.append('password', formData.password);
       formDataToSend.append('nid', formData.nid);
       formDataToSend.append('phoneNumber', formData.phoneNumber);
+      
+      // Add liveness verification status
+      const livenessStatus = formData.livenessVerified === true ? 'true' : 'false';
+      formDataToSend.append('livenessVerified', livenessStatus);
+      
+      console.log('Final registration submit - liveness status:', {
+        livenessVerified: formData.livenessVerified,
+        livenessStatus: livenessStatus
+      });
+      
       if (formData.nidPhoto) {
         formDataToSend.append('nidPhoto', formData.nidPhoto);
       }
@@ -315,6 +354,37 @@ export default function RegisterPage() {
       stream.getTracks().forEach(track => track.stop());
       videoRef.current.srcObject = null;
     }
+  };
+
+  const handleLivenessDetected = (result: LivenessResult, capturedImage: File) => {
+    console.log('Liveness detection completed:', result);
+    setFormData(prev => {
+      const newState = {
+        ...prev,
+        facePhoto: capturedImage,
+        livenessVerified: true
+      };
+      console.log('Updated form state after liveness:', newState);
+      return newState;
+    });
+    setShowLivenessDetection(false);
+    setMessage({
+      type: 'success',
+      text: `Liveness verified! ${result.checks.blinks} blinks detected with ${(result.confidence * 100).toFixed(1)}% confidence`
+    });
+  };
+
+  const handleLivenessError = (error: string) => {
+    setMessage({
+      type: 'error',
+      text: `Liveness detection failed: ${error}`
+    });
+    setShowLivenessDetection(false);
+  };
+
+  const startLivenessDetection = () => {
+    setMessage(null);
+    setShowLivenessDetection(true);
   };
 
   const renderProgressBar = () => (
@@ -484,69 +554,67 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Face Capture */}
+            {/* Liveness Detection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Facial Verification *
+                Liveness Verification *
               </label>
               <div className="space-y-3">
-                {!formData.facePhoto && !isCapturingFace && (
+                {!formData.facePhoto && !showLivenessDetection && (
                   <button
                     type="button"
-                    onClick={startFaceCapture}
+                    onClick={startLivenessDetection}
                     className="w-full py-2 px-4 border border-amber-300 rounded-lg text-amber-700 bg-amber-50 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
                   >
-                    📷 Start Face Capture
+                    🔍 Start Liveness Detection
                   </button>
                 )}
                 
-                {isCapturingFace && (
-                  <div className="space-y-3">
-                    <div className="relative bg-black rounded-lg overflow-hidden">
-                      <video
-                        ref={videoRef}
-                        className="w-full h-64 object-cover"
-                        autoPlay
-                        playsInline
-                        muted
-                      />
-                      <div className="absolute inset-0 border-2 border-amber-400 rounded-lg pointer-events-none">
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-64 border-2 border-amber-400 rounded-full opacity-50"></div>
-                      </div>
-                    </div>
-                    <div className="flex space-x-3">
-                      <button
-                        type="button"
-                        onClick={captureFacePhoto}
-                        className="flex-1 py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                      >
-                        📸 Capture Photo
-                      </button>
-                      <button
-                        type="button"
-                        onClick={stopFaceCapture}
-                        className="flex-1 py-2 px-4 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                      >
-                        ❌ Cancel
-                      </button>
-                    </div>
+                {showLivenessDetection && (
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <LivenessDetection
+                      onLivenessDetected={handleLivenessDetected}
+                      onError={handleLivenessError}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLivenessDetection(false)}
+                      className="mt-3 w-full py-2 px-4 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    >
+                      ❌ Cancel
+                    </button>
                   </div>
                 )}
                 
-                {formData.facePhoto && (
+                {formData.facePhoto && formData.livenessVerified && (
                   <div className="space-y-2">
                     <p className="text-sm text-green-600">
-                      ✓ Face photo captured successfully
+                      ✓ Liveness verification completed successfully
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Status: {formData.livenessVerified ? 'Verified' : 'Not Verified'}
                     </p>
                     <button
                       type="button"
                       onClick={() => {
-                        setFormData(prev => ({ ...prev, facePhoto: null }));
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          facePhoto: null, 
+                          livenessVerified: false 
+                        }));
                       }}
                       className="text-sm text-amber-600 hover:text-amber-500"
                     >
-                      Retake Photo
+                      Redo Liveness Check
                     </button>
+                  </div>
+                )}
+                
+                {formData.facePhoto && !formData.livenessVerified && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-red-600">
+                      ⚠ Liveness verification required
+                    </p>
                   </div>
                 )}
               </div>
@@ -568,8 +636,15 @@ export default function RegisterPage() {
               </button>
               <button
                 type="button"
-                onClick={handleVerificationSubmit}
-                disabled={isLoading || !formData.nidPhoto || !formData.facePhoto}
+                onClick={() => {
+                  console.log('Verify button clicked - form state:', {
+                    nidPhoto: !!formData.nidPhoto,
+                    facePhoto: !!formData.facePhoto,
+                    livenessVerified: formData.livenessVerified
+                  });
+                  handleVerificationSubmit();
+                }}
+                disabled={isLoading || !formData.nidPhoto || !formData.facePhoto || !formData.livenessVerified}
                 className="flex-1 py-4 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Verifying...' : 'Verify Identity'}

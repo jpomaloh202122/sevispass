@@ -118,6 +118,14 @@ export async function POST(request: NextRequest) {
       const verificationFormData = new FormData();
       verificationFormData.append('nidPhoto', nidPhoto);
       verificationFormData.append('facePhoto', facePhoto);
+      
+      // Check if liveness verification was completed
+      const livenessVerified = formData.get('livenessVerified');
+      verificationFormData.append('livenessVerified', livenessVerified || 'false');
+      
+      console.log('Final registration - face verification with liveness:', {
+        livenessVerified: livenessVerified
+      });
 
       const verificationResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/verify-face`, {
         method: 'POST',

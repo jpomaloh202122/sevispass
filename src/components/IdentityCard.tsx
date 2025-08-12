@@ -56,36 +56,53 @@ export default function IdentityCard({ name, nric, profileImage, isVerified = tr
     if (!cardRef.current) return;
 
     try {
-      // Use dom-to-image instead of html2canvas to avoid CSS parsing issues
+      // Use dom-to-image to capture the card with all content
       const dataUrl = await domtoimage.toPng(cardRef.current, {
-        ...downloadOptions.png,
-        width: cardRef.current.offsetWidth * 2,
-        height: cardRef.current.offsetHeight * 2,
-        style: {
-          ...downloadOptions.png.style,
-          transform: 'scale(2)',
-          transformOrigin: 'top left'
+        quality: 1,
+        width: 500,
+        height: 350,
+        bgcolor: 'transparent',
+        cacheBust: true,
+        // Don't override styles - let the original card styles show through
+        filter: (node) => {
+          // Include all elements including QR codes and text
+          return true;
         }
       });
 
       if (format === 'pdf') {
-        // Convert to PDF
+        // Convert to PDF - match the expected output exactly
         const pdf = new jsPDF(downloadOptions.pdf);
         
-        // Calculate dimensions to fit the card nicely on the page
-        const imgWidth = 180; // mm
-        const imgHeight = (cardRef.current.offsetHeight / cardRef.current.offsetWidth) * imgWidth;
+        // Keep clean white background for PDF
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
         
-        // Center the image on the page
-        const x = (pdf.internal.pageSize.getWidth() - imgWidth) / 2;
-        const y = (pdf.internal.pageSize.getHeight() - imgHeight) / 2;
+        // Use the same aspect ratio as PNG (500x350) for consistency
+        const cardAspectRatio = 350 / 500; // Height / Width from PNG dimensions
+        
+        // Calculate dimensions to fit well on page - use about 80% of width for bigger size
+        let imgWidth = pageWidth * 0.8;
+        let imgHeight = imgWidth * cardAspectRatio;
+        
+        // If height exceeds reasonable page space, scale down
+        const maxHeight = pageHeight * 0.7;
+        if (imgHeight > maxHeight) {
+          imgHeight = maxHeight;
+          imgWidth = imgHeight / cardAspectRatio;
+        }
+        
+        // Center the card perfectly on the page
+        const x = (pageWidth - imgWidth) / 2;
+        const y = (pageHeight - imgHeight) / 2;
         
         pdf.addImage(dataUrl, 'PNG', x, y, imgWidth, imgHeight);
         
-        // Add title
-        pdf.setFontSize(16);
+        // Add minimal title above card
+        pdf.setFontSize(12);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('SevisPass Digital Identity Card', pdf.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+        pdf.setTextColor(0, 0, 0);
+        pdf.text('SevisPass Digital Identity Card', pageWidth / 2, y - 10, { align: 'center' });
         
         // Download PDF
         pdf.save(getDownloadFilename(name, 'pdf'));
@@ -106,7 +123,11 @@ export default function IdentityCard({ name, nric, profileImage, isVerified = tr
   };
   return (
     <div className="relative">
-      <div ref={cardRef} className="bg-gradient-to-br from-black via-gray-900 to-yellow-600 rounded-xl p-8 text-white shadow-2xl border border-yellow-500/30">
+      <div 
+        ref={cardRef} 
+        className="bg-gradient-to-br from-black via-gray-800 to-yellow-500 rounded-xl p-8 text-white shadow-2xl border-2 border-yellow-400 shadow-yellow-400/20"
+        style={{ minWidth: '400px', minHeight: '280px' }}
+      >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
           <Image
@@ -241,7 +262,7 @@ export default function IdentityCard({ name, nric, profileImage, isVerified = tr
           </button>
           
           {/* Modal Card - Larger Version */}
-          <div className="bg-gradient-to-br from-black via-gray-900 to-yellow-600 rounded-2xl p-12 text-white shadow-2xl border border-yellow-500/30 transform scale-110">
+          <div className="bg-gradient-to-br from-black via-gray-800 to-yellow-500 rounded-2xl p-12 text-white shadow-2xl border-2 border-yellow-400 shadow-yellow-400/20 transform scale-110">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
                 <Image
