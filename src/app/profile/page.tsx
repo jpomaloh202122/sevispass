@@ -123,7 +123,7 @@ export default function ProfilePage() {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
       }
-    } catch (error) {
+    } catch {
       setMessage({ 
         type: 'error', 
         text: 'Failed to access camera. Please ensure camera permissions are granted.' 
