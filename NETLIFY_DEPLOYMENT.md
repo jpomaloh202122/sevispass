@@ -54,14 +54,18 @@ Make sure your `netlify.toml` has the correct configuration:
 
 **Solution:** The application now handles missing environment variables gracefully during build time. However, you still need to set them in Netlify for runtime functionality.
 
-### Issue 2: Build fails with module errors
+### Issue 2: "Html should not be imported outside of pages/_document" error
+
+**Solution:** ✅ Fixed! The application now includes proper error pages (`not-found.tsx` and `global-error.tsx`) for Next.js 15 App Router compatibility.
+
+### Issue 3: Build fails with module errors
 
 **Solution:** Clear Netlify's build cache:
 1. Go to Site settings → Build & deploy → Environment variables
 2. Add `NPM_FLAGS` with value `--legacy-peer-deps` if needed
 3. Trigger a new build
 
-### Issue 3: Database connection errors at runtime
+### Issue 4: Database connection errors at runtime
 
 **Solution:** 
 1. Verify all environment variables are correctly set in Netlify

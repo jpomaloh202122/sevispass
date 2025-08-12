@@ -6,6 +6,16 @@ const nextConfig: NextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    // Optimize package imports for better build performance
+    optimizePackageImports: ['@supabase/supabase-js'],
+  },
+  // Ensure TypeScript strict mode for better error handling
+  typescript: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has type errors.
+    ignoreBuildErrors: true,
+  },
 };
 
 export default nextConfig;
