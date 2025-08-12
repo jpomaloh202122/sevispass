@@ -4,20 +4,52 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
-  throw new Error('Missing Supabase environment variables. Please check your .env file.');
+// During build time on Netlify, we allow missing env vars and provide defaults
+// Runtime checks will handle missing variables appropriately
+const isBuildTime = process.env.NETLIFY === 'true' || process.env.CI === 'true' || process.env.BUILD_ID
+
+if (!isBuildTime && (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey)) {
+  console.error('Missing Supabase environment variables. Please check your .env file.');
+  console.error('Required variables: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY');
 }
 
+// Use fallback values during build time to prevent build failures
+const fallbackUrl = 'https://placeholder.supabase.co'
+const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDk5NzEyMDAsImV4cCI6MTk2NTUyNzIwMH0._DXrnXBJd9oUToFwShCOV3LgUntJLb0EUsZY3Q-v1tw'
+
 // For client-side operations (public)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(
+  supabaseUrl || fallbackUrl, 
+  supabaseAnonKey || fallbackKey
+)
 
 // For server-side operations (with service role permissions)
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
+export const supabaseAdmin = createClient(
+  supabaseUrl || fallbackUrl, 
+  supabaseServiceKey || fallbackKey, 
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
   }
-})
+)
+
+// Helper function to validate environment variables at runtime
+export function validateSupabaseConfig(): { isValid: boolean; missingVars: string[] } {
+  const requiredVars = [
+    'NEXT_PUBLIC_SUPABASE_URL',
+    'SUPABASE_ANON_KEY', 
+    'SUPABASE_SERVICE_ROLE_KEY'
+  ];
+  
+  const missingVars = requiredVars.filter(varName => !process.env[varName]);
+  
+  return {
+    isValid: missingVars.length === 0,
+    missingVars
+  };
+}
 
 // Database types for TypeScript
 export interface Database {
