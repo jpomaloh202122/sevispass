@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
 import { Jimp } from 'jimp';
 
 interface VerificationResponse {
@@ -45,7 +43,7 @@ export async function POST(request: NextRequest) {
           message: 'Face image is too small'
         } as VerificationResponse, { status: 400 });
       }
-    } catch (imageError) {
+    } catch {
       return NextResponse.json({
         success: false,
         message: 'Invalid image format'
@@ -120,28 +118,4 @@ async function simulateFaceVerification(nidBuffer: Buffer, faceBuffer: Buffer): 
     console.error('Simulation error:', error);
     return 0.82; // Meet the new 0.8 threshold even with errors
   }
-}
-
-function calculateImageBrightness(image: any): number {
-  let totalBrightness = 0;
-  let pixelCount = 0;
-  
-  const width = image.bitmap.width;
-  const height = image.bitmap.height;
-  
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const idx = (width * y + x) << 2;
-      const red = image.bitmap.data[idx + 0];
-      const green = image.bitmap.data[idx + 1];
-      const blue = image.bitmap.data[idx + 2];
-      
-      // Calculate brightness using luminance formula
-      const brightness = (0.299 * red + 0.587 * green + 0.114 * blue);
-      totalBrightness += brightness;
-      pixelCount++;
-    }
-  }
-  
-  return totalBrightness / pixelCount;
 }

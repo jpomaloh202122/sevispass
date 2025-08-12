@@ -10,6 +10,7 @@ export interface User {
   nid: string;
   phoneNumber: string;
   address?: string;
+  isVerified?: boolean;
   createdAt?: string;
 }
 

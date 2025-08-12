@@ -36,8 +36,7 @@ export class OCRService {
         .greyscale() // Convert to grayscale
         .contrast(0.5) // Increase contrast
         .normalize() // Normalize brightness and contrast
-        .resize(image.bitmap.width * 2, image.bitmap.height * 2) // Upscale for better text recognition
-        .quality(100); // Maximum quality
+        .resize({ w: image.bitmap.width * 2, h: image.bitmap.height * 2 }); // Upscale for better text recognition
 
       return await image.getBuffer('image/png');
     } catch (error) {
@@ -46,7 +45,7 @@ export class OCRService {
     }
   }
 
-  async extractTextFromDocument(imageBuffer: Buffer): Promise<OCRResult> {
+  async extractTextFromDocument(_imageBuffer: Buffer): Promise<OCRResult> {
     await this.initializeWorker();
     
     // Since OCR is currently unavailable, return failure to trigger fallback

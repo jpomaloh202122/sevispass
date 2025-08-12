@@ -6,6 +6,7 @@ export interface User {
   nid: string; // NID or Passport Number
   phoneNumber: string;
   address?: string;
+  isVerified?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -15,7 +16,7 @@ export interface UserRegistrationData {
   lastName: string;
   email: string;
   password: string;
-  confirmPassword: string;
+  confirmPassword?: string; // Optional since validation is handled in frontend
   nid: string; // NID or Passport Number
   phoneNumber: string;
 }
