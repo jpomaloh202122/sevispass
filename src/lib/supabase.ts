@@ -14,8 +14,9 @@ if (!isBuildTime && (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey)) {
 }
 
 // Use fallback values during build time to prevent build failures
-const fallbackUrl = 'https://placeholder.supabase.co'
-const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDk5NzEyMDAsImV4cCI6MTk2NTUyNzIwMH0._DXrnXBJd9oUToFwShCOV3LgUntJLb0EUsZY3Q-v1tw'
+// Note: These are non-functional placeholder values for build-time only
+const fallbackUrl = 'https://build-placeholder.supabase.co'
+const fallbackKey = 'build-time-placeholder-key-not-functional'
 
 // For client-side operations (public)
 export const supabase = createClient(
