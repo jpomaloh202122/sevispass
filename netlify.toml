@@ -16,3 +16,7 @@
 # Environment variables for Prisma
 [context.production.environment]
   PRISMA_GENERATE_DATAPROXY = "false"
+
+# NOTE: You must set DATABASE_URL environment variable in Netlify dashboard
+# For PostgreSQL: postgresql://username:password@host:port/database?sslmode=require
+# For testing with SQLite (will have limitations): file:./dev.db
