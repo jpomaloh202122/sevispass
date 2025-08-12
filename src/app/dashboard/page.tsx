@@ -26,6 +26,7 @@ export default function DashboardPage() {
             <IdentityCard
               name={`${user?.firstName} ${user?.lastName}`}
               nric={user?.nid || ''}
+              uid={user?.uid}
               isVerified={true}
             />
           </div>
@@ -40,7 +41,10 @@ export default function DashboardPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
-                  <span className="text-sm font-medium">Download Digital ID</span>
+                  <div>
+                    <span className="text-sm font-medium block">Download Digital ID</span>
+                    <span className="text-xs text-gray-500">PNG or PDF with QR code</span>
+                  </div>
                 </div>
               </button>
               
@@ -65,6 +69,158 @@ export default function DashboardPage() {
                   <span className="text-sm font-medium">Security Settings</span>
                 </div>
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Verifiable Credentials Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">Verifiable Credentials</h2>
+            <button className="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-xl">
+              + Add Credential
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Education Credentials */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Education</h3>
+              <p className="text-sm text-gray-600 mb-4 text-center">Certificates & Transcripts</p>
+              
+              <div className="space-y-2">
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-700">Bachelor's Degree</span>
+                    <span className="text-xs text-green-600">✓ Verified</span>
+                  </div>
+                </div>
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-700">Transcript</span>
+                    <span className="text-xs text-green-600">✓ Verified</span>
+                  </div>
+                </div>
+                <button className="w-full p-2 text-xs text-blue-600 hover:text-blue-700 border border-dashed border-blue-300 rounded-lg hover:bg-blue-50 transition-colors">
+                  + Add Education Credential
+                </button>
+              </div>
+            </div>
+            
+            {/* Civil Registry Credentials */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Civil Registry</h3>
+              <p className="text-sm text-gray-600 mb-4 text-center">Birth Certificates & Records</p>
+              
+              <div className="space-y-2">
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-700">Birth Certificate</span>
+                    <span className="text-xs text-green-600">✓ Verified</span>
+                  </div>
+                </div>
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-700">Marriage Certificate</span>
+                    <span className="text-xs text-amber-600">⏳ Pending</span>
+                  </div>
+                </div>
+                <button className="w-full p-2 text-xs text-green-600 hover:text-green-700 border border-dashed border-green-300 rounded-lg hover:bg-green-50 transition-colors">
+                  + Add Civil Registry Credential
+                </button>
+              </div>
+            </div>
+            
+            {/* Transport Credentials */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1h1m0-3v3m0 0h8.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V19a1 1 0 01-1 1h-2M7 7h3m-3 4h3m-3 4h3" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Transport</h3>
+              <p className="text-sm text-gray-600 mb-4 text-center">Driver's License & Permits</p>
+              
+              <div className="space-y-2">
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-700">Driver's License</span>
+                    <span className="text-xs text-green-600">✓ Verified</span>
+                  </div>
+                </div>
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-700">Motorcycle License</span>
+                    <span className="text-xs text-gray-500">Not Added</span>
+                  </div>
+                </div>
+                <button className="w-full p-2 text-xs text-purple-600 hover:text-purple-700 border border-dashed border-purple-300 rounded-lg hover:bg-purple-50 transition-colors">
+                  + Add Transport Credential
+                </button>
+              </div>
+            </div>
+            
+            {/* Immigration & Citizen Credentials */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Immigration</h3>
+              <p className="text-sm text-gray-600 mb-4 text-center">Passports & Citizenship</p>
+              
+              <div className="space-y-2">
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-700">Passport</span>
+                    <span className="text-xs text-green-600">✓ Verified</span>
+                  </div>
+                </div>
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-700">Citizenship Certificate</span>
+                    <span className="text-xs text-green-600">✓ Verified</span>
+                  </div>
+                </div>
+                <button className="w-full p-2 text-xs text-red-600 hover:text-red-700 border border-dashed border-red-300 rounded-lg hover:bg-red-50 transition-colors">
+                  + Add Immigration Credential
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Credential Statistics */}
+          <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Credential Overview</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">4</div>
+                <div className="text-sm text-gray-600">Education</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">2</div>
+                <div className="text-sm text-gray-600">Civil Registry</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">1</div>
+                <div className="text-sm text-gray-600">Transport</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-600">2</div>
+                <div className="text-sm text-gray-600">Immigration</div>
+              </div>
             </div>
           </div>
         </div>
