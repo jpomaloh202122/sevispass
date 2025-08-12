@@ -1,0 +1,18 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NPM_FLAGS = "--production=false"
+
+# Force fresh builds to prevent Prisma cache issues
+[build.processing]
+  skip_processing = false
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Environment variables for Prisma
+[context.production.environment]
+  PRISMA_GENERATE_DATAPROXY = "false"
