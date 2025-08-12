@@ -45,9 +45,21 @@ export const db = {
       }
 
       // Handle different where conditions
-      Object.entries(query.where).forEach(([key, value]) => {
-        supabaseQuery = supabaseQuery.eq(key, value)
-      })
+      if (query.where.OR) {
+        // Handle OR queries by using the 'or' method
+        const orConditions = query.where.OR.map((condition: any) => {
+          const key = Object.keys(condition)[0]
+          const value = condition[key]
+          return `${key}.eq.${value}`
+        }).join(',')
+        
+        supabaseQuery = supabaseQuery.or(orConditions)
+      } else {
+        // Handle regular AND conditions
+        Object.entries(query.where).forEach(([key, value]) => {
+          supabaseQuery = supabaseQuery.eq(key, value)
+        })
+      }
 
       const { data, error } = await supabaseQuery.limit(1)
       
