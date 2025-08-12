@@ -84,7 +84,14 @@ export async function POST(request: NextRequest) {
       const isPassport = /^[A-Z]{1,2}\d{6,9}$/i.test(body.nid) || body.nid.length >= 8;
       documentValidationFormData.append('documentType', isPassport ? 'passport' : 'nid');
 
-      const docValidationResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/validate-document`, {
+      // Use the same base URL logic for document validation
+      const baseUrl = process.env.VERCEL_URL 
+        ? `https://${process.env.VERCEL_URL}` 
+        : process.env.NEXTAUTH_URL 
+        ? process.env.NEXTAUTH_URL
+        : request.url.replace(/\/api\/.*$/, ''); // Extract base URL from current request
+      
+      const docValidationResponse = await fetch(`${baseUrl}/api/auth/validate-document`, {
         method: 'POST',
         body: documentValidationFormData
       });
@@ -127,7 +134,16 @@ export async function POST(request: NextRequest) {
         livenessVerified: livenessVerified
       });
 
-      const verificationResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/verify-face`, {
+      // Use relative URL for internal API calls to work in both dev and production
+      const baseUrl = process.env.VERCEL_URL 
+        ? `https://${process.env.VERCEL_URL}` 
+        : process.env.NEXTAUTH_URL 
+        ? process.env.NEXTAUTH_URL
+        : request.url.replace(/\/api\/.*$/, ''); // Extract base URL from current request
+      
+      console.log('Face verification URL:', `${baseUrl}/api/auth/verify-face`);
+      
+      const verificationResponse = await fetch(`${baseUrl}/api/auth/verify-face`, {
         method: 'POST',
         body: verificationFormData
       });
@@ -143,10 +159,15 @@ export async function POST(request: NextRequest) {
 
       console.log(`Face verification successful with confidence: ${verificationResult.confidence}`);
     } catch (verificationError) {
-      console.error('Face verification error:', verificationError);
+      console.error('Face verification error:', {
+        error: verificationError,
+        message: verificationError instanceof Error ? verificationError.message : 'Unknown error',
+        stack: verificationError instanceof Error ? verificationError.stack : undefined,
+        baseUrl: process.env.VERCEL_URL || process.env.NEXTAUTH_URL || 'not set'
+      });
       return NextResponse.json({
         success: false,
-        message: 'Face verification service unavailable'
+        message: `Face verification service unavailable: ${verificationError instanceof Error ? verificationError.message : 'Unknown error'}`
       } as UserRegistrationResponse, { status: 503 });
     }
 
