@@ -56,7 +56,11 @@ Make sure your `netlify.toml` has the correct configuration:
 
 ### Issue 2: "Html should not be imported outside of pages/_document" error
 
-**Solution:** ✅ Fixed! The application now includes proper error pages (`not-found.tsx` and `global-error.tsx`) for Next.js 15 App Router compatibility.
+**Solution:** ✅ Fixed! The application now includes proper error pages for Next.js 15 App Router:
+- `not-found.tsx` - Custom 404 page
+- `error.tsx` - Error boundary (without html/body tags)
+
+Note: The issue was caused by using `<html>` and `<body>` tags in `global-error.tsx`. These should only be used in root-level global error pages, not regular error boundaries.
 
 ### Issue 3: Build fails with module errors
 
