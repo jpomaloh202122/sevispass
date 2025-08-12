@@ -3,8 +3,6 @@ import { generateUID } from '@/lib/uid-generator';
 import { hashPassword, validateEmail, validatePassword, validateNidOrPassport, validatePhoneNumber } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { UserRegistrationData, UserRegistrationResponse } from '@/types/user';
-import { promises as fs } from 'fs';
-import path from 'path';
 
 export async function POST(request: NextRequest) {
   try {
@@ -198,34 +196,29 @@ export async function POST(request: NextRequest) {
       } as UserRegistrationResponse, { status: 500 });
     }
 
-    // Save uploaded files
+    // Convert uploaded files to base64
     let nidPhotoPath = '';
     let facePhotoPath = '';
     let profileImagePath = '';
     
     try {
-      const uploadsDir = path.join(process.cwd(), 'uploads', uid);
-      await fs.mkdir(uploadsDir, { recursive: true });
-
-      // Save NID/Passport photo
+      // Convert NID/Passport photo to base64
       const nidPhotoBuffer = Buffer.from(await nidPhoto.arrayBuffer());
-      nidPhotoPath = path.join(uploadsDir, `nid-${Date.now()}.jpg`);
-      await fs.writeFile(nidPhotoPath, nidPhotoBuffer);
+      const nidPhotoBase64 = nidPhotoBuffer.toString('base64');
+      nidPhotoPath = `data:${nidPhoto.type || 'image/jpeg'};base64,${nidPhotoBase64}`;
 
-      // Save face photo
+      // Convert face photo to base64
       const facePhotoBuffer = Buffer.from(await facePhoto.arrayBuffer());
-      const timestamp = Date.now();
-      facePhotoPath = path.join(uploadsDir, `face-${timestamp}.jpg`);
-      await fs.writeFile(facePhotoPath, facePhotoBuffer);
+      const facePhotoBase64 = facePhotoBuffer.toString('base64');
+      facePhotoPath = `data:${facePhoto.type || 'image/jpeg'};base64,${facePhotoBase64}`;
 
-      // Copy face photo as profile image
-      profileImagePath = path.join(uploadsDir, `profile-${timestamp}.jpg`);
-      await fs.writeFile(profileImagePath, facePhotoBuffer);
+      // Use face photo as profile image
+      profileImagePath = facePhotoPath;
     } catch (fileError) {
-      console.error('File save error:', fileError);
+      console.error('File processing error:', fileError);
       return NextResponse.json({
         success: false,
-        message: 'Failed to save verification photos'
+        message: 'Failed to process verification photos'
       } as UserRegistrationResponse, { status: 500 });
     }
 
