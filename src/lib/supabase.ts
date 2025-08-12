@@ -5,7 +5,7 @@ const supabaseAnonKey = process.env.SUPABASE_ANON_KEY
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
-  throw new Error('Missing Supabase environment variables. Please check your .env file.')
+  throw new Error('Missing Supabase environment variables. Please check your .env file.');
 }
 
 // For client-side operations (public)

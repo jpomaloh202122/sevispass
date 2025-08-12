@@ -1,9 +1,13 @@
-import { supabaseAdmin } from './supabase'
+import { supabaseAdmin, type Database } from './supabase'
+
+type UserInsert = Database['public']['Tables']['users']['Insert']
+type WhereClause = Record<string, unknown>
+type SelectClause = Record<string, boolean>
 
 // Create a Supabase-based database interface that mimics Prisma
 export const db = {
   user: {
-    async create(data: { data: any }) {
+    async create(data: { data: UserInsert }) {
       const { data: result, error } = await supabaseAdmin
         .from('users')
         .insert(data.data)
@@ -14,7 +18,7 @@ export const db = {
       return result
     },
 
-    async findUnique(query: { where: any; select?: any }) {
+    async findUnique(query: { where: WhereClause; select?: SelectClause }) {
       let supabaseQuery = supabaseAdmin.from('users').select('*')
       
       if (query.select) {
@@ -36,7 +40,7 @@ export const db = {
       return data
     },
 
-    async findFirst(query: { where: any; select?: any }) {
+    async findFirst(query: { where: WhereClause; select?: SelectClause }) {
       let supabaseQuery = supabaseAdmin.from('users').select('*')
       
       if (query.select) {
@@ -47,7 +51,7 @@ export const db = {
       // Handle different where conditions
       if (query.where.OR) {
         // Handle OR queries by using the 'or' method
-        const orConditions = query.where.OR.map((condition: any) => {
+        const orConditions = (query.where.OR as WhereClause[]).map((condition: WhereClause) => {
           const key = Object.keys(condition)[0]
           const value = condition[key]
           return `${key}.eq.${value}`
@@ -68,7 +72,7 @@ export const db = {
       return data?.[0] || null
     },
 
-    async update(query: { where: any; data: any }) {
+    async update(query: { where: WhereClause; data: Partial<UserInsert> }) {
       let supabaseQuery = supabaseAdmin.from('users').update(query.data)
 
       // Handle different where conditions
@@ -82,7 +86,7 @@ export const db = {
       return data
     },
 
-    async delete(query: { where: any }) {
+    async delete(query: { where: WhereClause }) {
       let supabaseQuery = supabaseAdmin.from('users').delete()
 
       // Handle different where conditions
@@ -96,7 +100,7 @@ export const db = {
       return data
     },
 
-    async deleteMany(query?: { where?: any }) {
+    async deleteMany(query?: { where?: WhereClause }) {
       let supabaseQuery = supabaseAdmin.from('users').delete()
 
       if (query?.where) {

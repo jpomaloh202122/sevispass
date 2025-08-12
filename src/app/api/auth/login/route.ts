@@ -15,6 +15,10 @@ interface LoginResponse {
     firstName: string;
     lastName: string;
     email: string;
+    nid: string;
+    phoneNumber: string;
+    address?: string;
+    createdAt: string;
   };
   message: string;
 }
@@ -104,7 +108,7 @@ export async function POST(request: NextRequest) {
         nid: user.nid,
         phoneNumber: user.phoneNumber,
         address: user.address,
-        createdAt: user.createdAt.toISOString()
+        createdAt: user.createdAt
       },
       message: 'Login successful'
     } as LoginResponse);

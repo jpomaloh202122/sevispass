@@ -135,7 +135,7 @@ export async function PUT(request: NextRequest) {
           email: body.email,
           phoneNumber: body.phoneNumber,
           address: body.address,
-          updatedAt: new Date()
+          updatedAt: new Date().toISOString()
         }
       });
     } catch (updateError) {

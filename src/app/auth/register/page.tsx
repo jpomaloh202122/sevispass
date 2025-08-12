@@ -47,15 +47,51 @@ export default function RegisterPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const handlePersonalInfoNext = () => {
+  const handlePersonalInfoNext = async () => {
     // Validate personal information
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.nid || !formData.phoneNumber) {
       setMessage({ type: 'error', text: 'Please fill in all required fields' });
       return;
     }
     
+    setIsLoading(true);
     setMessage(null);
-    setCurrentStep('verification');
+
+    try {
+      // Call step 1 validation endpoint to check for duplicates
+      const response = await fetch('/api/auth/validate-step1', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          nid: formData.nid,
+          phoneNumber: formData.phoneNumber,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        setMessage({ type: 'error', text: result.message });
+        setIsLoading(false);
+        return;
+      }
+
+      // Validation passed, proceed to verification step
+      setCurrentStep('verification');
+    } catch (error) {
+      console.error('Step 1 validation error:', error);
+      setMessage({ 
+        type: 'error', 
+        text: 'Validation failed. Please try again.' 
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleVerificationSubmit = async () => {
@@ -412,9 +448,10 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={handlePersonalInfoNext}
-                className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
+                disabled={isLoading}
+                className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Continue to Verification
+                {isLoading ? 'Validating...' : 'Continue to Verification'}
               </button>
             </div>
           </form>
