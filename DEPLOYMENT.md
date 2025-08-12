@@ -1,55 +1,59 @@
 # SevisPass Deployment Guide
 
-## Netlify Deployment
+## Netlify Deployment with Supabase
 
 ### Prerequisites
 
-1. **Database Setup**: Since Netlify Functions are serverless, you need a cloud database for production.
+1. **Supabase Project**: Create a Supabase project for your database
+2. **GitHub Repository**: Code must be in GitHub for Netlify deployment
 
-### Recommended Database Options:
+### Supabase Setup:
 
-1. **Neon (PostgreSQL)** - Free tier available
-   - Go to [neon.tech](https://neon.tech)
-   - Create a new project
-   - Copy the connection string
-
-2. **PlanetScale (MySQL)** - Free tier available
-   - Go to [planetscale.com](https://planetscale.com)
-   - Create a new database
-   - Copy the connection string
-
-3. **Supabase (PostgreSQL)** - Free tier available
+1. **Create Supabase Project**:
    - Go to [supabase.com](https://supabase.com)
    - Create a new project
-   - Copy the connection string from Settings > Database
+   - Wait for project initialization
 
-### Deployment Steps:
+2. **Get API Keys**:
+   - Go to Settings → API
+   - Copy your Project URL
+   - Copy your anon (public) key  
+   - Copy your service_role key
+
+3. **Create Database Table**:
+   - Go to SQL Editor in Supabase dashboard
+   - Run the SQL script from `supabase-setup.sql`
+
+### Netlify Deployment Steps:
 
 1. **Set Environment Variables in Netlify**:
    - Go to your Netlify site dashboard
    - Navigate to Site Settings > Environment variables
    - Add the following variables:
      ```
-     DATABASE_URL=your-database-connection-string
+     NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+     SUPABASE_ANON_KEY=your-anon-key-starting-with-eyJ
+     SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-starting-with-eyJ
      JWT_SECRET=your-super-secret-jwt-key-here-change-in-production
      ```
 
-2. **Update Prisma Schema** (if using PostgreSQL):
-   - Change `provider = "sqlite"` to `provider = "postgresql"` in `prisma/schema.prisma`
-
-3. **Deploy**:
+2. **Deploy**:
    - Push your changes to GitHub
    - Netlify will automatically redeploy
 
-### Database Migration:
+### Database Management:
 
-For PostgreSQL databases, you may need to push the schema:
-```bash
-npx prisma db push
-```
+- **View Data**: Use Supabase dashboard → Table Editor
+- **Run Queries**: Use Supabase dashboard → SQL Editor
+- **Monitor Usage**: Check Supabase dashboard → Settings → Usage
 
 ### Troubleshooting:
 
-- If you see "Database connection error", check your `DATABASE_URL` environment variable
-- For PostgreSQL, ensure the connection string includes `?sslmode=require`
+- If you see "Database connection error", check your Supabase environment variables
+- Ensure service_role key is set correctly (not the anon key)
+- Verify the users table was created with the SQL script
 - Check Netlify function logs for detailed error messages
+
+### No Prisma Required:
+
+This application uses Supabase JavaScript client directly, so no database migrations or Prisma setup is needed.

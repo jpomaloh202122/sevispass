@@ -6,17 +6,11 @@
   NODE_VERSION = "22"
   NPM_FLAGS = "--production=false"
 
-# Force fresh builds to prevent Prisma cache issues
-[build.processing]
-  skip_processing = false
-
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Environment variables for Prisma
-[context.production.environment]
-  PRISMA_GENERATE_DATAPROXY = "false"
-
-# NOTE: You must set DATABASE_URL environment variable in Netlify dashboard
-# For PostgreSQL: postgresql://username:password@host:port/database?sslmode=require
-# For testing with SQLite (will have limitations): file:./dev.db
+# NOTE: You must set these environment variables in Netlify dashboard:
+# NEXT_PUBLIC_SUPABASE_URL = https://your-project-ref.supabase.co
+# SUPABASE_ANON_KEY = your-anon-key-starting-with-eyJ
+# SUPABASE_SERVICE_ROLE_KEY = your-service-role-key-starting-with-eyJ
+# JWT_SECRET = your-secure-jwt-secret

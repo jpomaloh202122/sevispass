@@ -7,26 +7,17 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:setup": "echo 'Run supabase-setup.sql in your Supabase SQL Editor'",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:reset": "prisma migrate reset",
-    "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:setup": "echo 'Run supabase-setup.sql in your Supabase SQL Editor'"
   },
   "dependencies": {
-    "@prisma/client": "^6.13.0",
     "@supabase/supabase-js": "^2.55.0",
     "@types/multer": "^2.0.0",
-    "@types/pg": "^8.15.5",
     "bcryptjs": "^3.0.2",
     "canvas": "^3.1.2",
     "jimp": "^1.6.0",
     "multer": "^2.0.2",
     "next": "15.4.6",
     "next-auth": "^4.24.11",
-    "pg": "^8.16.3",
-    "prisma": "^6.13.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "sharp": "^0.34.3"
