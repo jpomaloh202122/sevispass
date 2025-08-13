@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { emailService } from '@/lib/aws-ses';
+import { format } from 'date-fns';
 
 interface BookingRequest {
   userUid: string;
@@ -142,6 +144,38 @@ export async function POST(request: NextRequest) {
     });
 
     console.log('Appointment created successfully:', appointment);
+
+    // Get user details for email
+    const userData = await db.user.findUnique({
+      where: { uid: userUid },
+      select: { email: true, firstName: true, lastName: true }
+    });
+
+    // Send appointment confirmation email (non-blocking)
+    if (userData && appointment.location) {
+      try {
+        const emailResult = await emailService.sendAppointmentConfirmationEmail(
+          userData.email,
+          `${userData.firstName} ${userData.lastName}`,
+          {
+            date: format(new Date(appointment.appointment_date), 'EEEE, MMMM d, yyyy'),
+            time: appointment.appointment_time,
+            location: appointment.location.name,
+            address: appointment.location.address,
+            phone: appointment.location.phone
+          }
+        );
+        
+        if (emailResult.success) {
+          console.log('Appointment confirmation email sent successfully');
+        } else {
+          console.error('Failed to send appointment confirmation email:', emailResult.error);
+        }
+      } catch (emailError) {
+        console.error('Email service error during appointment booking:', emailError);
+        // Don't fail booking if email fails
+      }
+    }
 
     return NextResponse.json({
       success: true,

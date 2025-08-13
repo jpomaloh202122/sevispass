@@ -10,6 +10,7 @@
     "db:setup": "echo 'Run supabase-setup.sql in your Supabase SQL Editor'"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.864.0",
     "@supabase/supabase-js": "^2.55.0",
     "@types/multer": "^2.0.0",
     "@types/qrcode": "^1.5.5",

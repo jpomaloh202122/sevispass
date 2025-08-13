@@ -334,20 +334,26 @@ export default function BiometricDashboard({ userUid, userName }: BiometricDashb
         </div>
       ) : (
         <div className="text-center py-8">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 bg-gradient-to-br from-amber-100 to-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h8m-8 0H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-2" />
             </svg>
           </div>
-          <h4 className="text-lg font-medium text-gray-900 mb-2">No Appointment Scheduled</h4>
-          <p className="text-sm text-gray-600 mb-6">
-            Schedule your biometric fingerprint collection to complete your Digital ID application.
+          <h4 className="text-lg font-medium text-gray-900 mb-2">Complete Your Digital ID Application</h4>
+          <p className="text-sm text-gray-600 mb-4">
+            Schedule your biometric fingerprint collection appointment to activate your Digital ID.
           </p>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
+            <h5 className="text-sm font-semibold text-blue-900 mb-2">Why is this required?</h5>
+            <p className="text-xs text-blue-800">
+              Biometric collection ensures the security and authenticity of your Digital ID. This is the final step to complete your SevisPass application.
+            </p>
+          </div>
           <button
             onClick={() => setShowScheduling(true)}
             className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-xl"
           >
-            Schedule Appointment
+            Schedule Biometric Appointment
           </button>
         </div>
       )}

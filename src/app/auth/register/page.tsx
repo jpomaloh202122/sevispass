@@ -1,11 +1,9 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { UserRegistrationResponse } from '@/types/user';
 import LivenessDetection from '@/components/LivenessDetection';
-import EnhancedBiometricScheduling from '@/components/EnhancedBiometricScheduling';
 
 interface FormData {
   firstName: string;
@@ -20,7 +18,7 @@ interface FormData {
   livenessVerified: boolean;
 }
 
-type RegistrationStep = 'personal' | 'verification' | 'password' | 'biometric' | 'complete';
+type RegistrationStep = 'personal' | 'verification' | 'password' | 'complete';
 
 interface VerificationResult {
   success: boolean;
@@ -39,7 +37,6 @@ interface LivenessResult {
 }
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
@@ -56,13 +53,8 @@ export default function RegisterPage() {
   const [currentStep, setCurrentStep] = useState<RegistrationStep>('personal');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [isCapturingFace, setIsCapturingFace] = useState(false);
   const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
   const [showLivenessDetection, setShowLivenessDetection] = useState(false);
-  const [userUid, setUserUid] = useState<string>('');
-  const [biometricAppointment, setBiometricAppointment] = useState<any>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const handlePersonalInfoNext = async () => {
     // Validate personal information
@@ -259,11 +251,10 @@ export default function RegisterPage() {
       const result: UserRegistrationResponse = await response.json();
 
       if (result.success && result.uid) {
-        setUserUid(result.uid);
-        setCurrentStep('biometric');
+        setCurrentStep('complete');
         setMessage({ 
           type: 'success', 
-          text: `Welcome ${formData.firstName}! Please schedule your biometric fingerprint collection appointment.` 
+          text: `Welcome ${formData.firstName}! Your account has been created successfully.` 
         });
       } else {
         setMessage({ type: 'error', text: result.message || 'Registration failed' });
@@ -297,63 +288,6 @@ export default function RegisterPage() {
     }
   };
 
-  const startFaceCapture = async () => {
-    try {
-      setIsCapturingFace(true);
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user' },
-        audio: false 
-      });
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
-    } catch {
-      setMessage({ 
-        type: 'error', 
-        text: 'Failed to access camera. Please ensure camera permissions are granted.' 
-      });
-      setIsCapturingFace(false);
-    }
-  };
-
-  const captureFacePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const context = canvasRef.current.getContext('2d');
-      if (context) {
-        canvasRef.current.width = videoRef.current.videoWidth;
-        canvasRef.current.height = videoRef.current.videoHeight;
-        context.drawImage(videoRef.current, 0, 0);
-        
-        canvasRef.current.toBlob((blob) => {
-          if (blob) {
-            const file = new File([blob], 'face-capture.jpg', { type: 'image/jpeg' });
-            setFormData(prev => ({
-              ...prev,
-              facePhoto: file
-            }));
-            setIsCapturingFace(false);
-            
-            // Stop camera stream
-            const stream = videoRef.current!.srcObject as MediaStream;
-            if (stream) {
-              stream.getTracks().forEach(track => track.stop());
-            }
-          }
-        }, 'image/jpeg', 0.8);
-      }
-    }
-  };
-
-  const stopFaceCapture = () => {
-    setIsCapturingFace(false);
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
-      videoRef.current.srcObject = null;
-    }
-  };
 
   const handleLivenessDetected = (result: LivenessResult, capturedImage: File) => {
     console.log('Liveness detection completed:', result);
@@ -386,36 +320,22 @@ export default function RegisterPage() {
     setShowLivenessDetection(true);
   };
 
-  const handleAppointmentBooked = (appointment: any) => {
-    setBiometricAppointment(appointment);
-    setCurrentStep('complete');
-    setMessage({
-      type: 'success',
-      text: 'Biometric appointment scheduled successfully! Your Digital ID application is now complete.'
-    });
-    
-    // Redirect to dashboard after short delay
-    setTimeout(() => {
-      router.push('/dashboard');
-    }, 3000);
-  };
 
   const renderProgressBar = () => (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-gray-700">Registration Progress</span>
         <span className="text-sm text-gray-500">
-          Step {currentStep === 'personal' ? '1' : currentStep === 'verification' ? '2' : currentStep === 'password' ? '3' : currentStep === 'biometric' ? '4' : '5'} of 5
+          Step {currentStep === 'personal' ? '1' : currentStep === 'verification' ? '2' : currentStep === 'password' ? '3' : '4'} of 4
         </span>
       </div>
       <div className="w-full bg-gray-200 rounded-full h-2">
         <div 
           className="bg-gradient-to-r from-yellow-400 to-amber-500 h-2 rounded-full transition-all duration-500"
           style={{
-            width: currentStep === 'personal' ? '20%' : 
-                   currentStep === 'verification' ? '40%' : 
-                   currentStep === 'password' ? '60%' : 
-                   currentStep === 'biometric' ? '80%' : '100%'
+            width: currentStep === 'personal' ? '25%' : 
+                   currentStep === 'verification' ? '50%' : 
+                   currentStep === 'password' ? '75%' : '100%'
           }}
         ></div>
       </div>
@@ -436,7 +356,6 @@ export default function RegisterPage() {
             {currentStep === 'personal' ? 'Enter your personal information' :
              currentStep === 'verification' ? 'Verify your identity' :
              currentStep === 'password' ? 'Set your password' :
-             currentStep === 'biometric' ? 'Schedule biometric appointment' :
              'Registration complete'}
           </p>
         </div>
@@ -635,10 +554,6 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <canvas
-              ref={canvasRef}
-              style={{ display: 'none' }}
-            />
             </div>
 
             <div className="flex space-x-3">
@@ -736,18 +651,7 @@ export default function RegisterPage() {
           </form>
         )}
 
-        {/* Step 4: Biometric Appointment Scheduling */}
-        {currentStep === 'biometric' && userUid && (
-          <div className="mt-8 bg-white rounded-lg p-6 shadow-sm">
-            <EnhancedBiometricScheduling
-              userUid={userUid}
-              userName={`${formData.firstName} ${formData.lastName}`}
-              onAppointmentBooked={handleAppointmentBooked}
-            />
-          </div>
-        )}
-
-        {/* Step 5: Registration Complete */}
+        {/* Step 4: Registration Complete */}
         {currentStep === 'complete' && (
           <div className="mt-8 text-center space-y-6">
             <div className="mx-auto h-20 w-20 bg-green-100 rounded-full flex items-center justify-center">
@@ -756,21 +660,40 @@ export default function RegisterPage() {
               </svg>
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-gray-900">Registration Complete!</h3>
+              <h3 className="text-2xl font-bold text-gray-900">Account Created Successfully!</h3>
               <p className="mt-2 text-gray-600">
-                Your SevisPass account has been successfully created and your biometric appointment is scheduled.
+                Your SevisPass account has been created and your identity has been verified.
               </p>
-              {biometricAppointment && (
-                <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                  <p className="text-sm text-amber-800">
-                    <strong>Appointment Details:</strong><br />
-                    📍 {biometricAppointment.location.name}<br />
-                    📅 {new Date(biometricAppointment.appointmentDate).toLocaleDateString()}<br />
-                    🕒 {biometricAppointment.appointmentTime}<br />
-                    📞 {biometricAppointment.location.phone}
-                  </p>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 text-left">
+              <h4 className="text-lg font-semibold text-amber-900 mb-3">Next Steps:</h4>
+              <div className="space-y-2 text-sm text-amber-800">
+                <div className="flex items-start">
+                  <span className="font-medium mr-2">1.</span>
+                  <span>Log in to your new SevisPass account</span>
                 </div>
-              )}
+                <div className="flex items-start">
+                  <span className="font-medium mr-2">2.</span>
+                  <span>Schedule your biometric fingerprint collection appointment from your dashboard</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="font-medium mr-2">3.</span>
+                  <span>Complete your biometric collection to activate your Digital ID</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Link 
+                href="/auth/login"
+                className="inline-block w-full py-4 px-6 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-xl"
+              >
+                Continue to Login
+              </Link>
+              <p className="text-sm text-gray-500">
+                You can schedule your biometric appointment after logging in
+              </p>
             </div>
           </div>
         )}

@@ -3,6 +3,7 @@ import { generateUID } from '@/lib/uid-generator';
 import { hashPassword, validateEmail, validatePassword, validateNidOrPassport, validatePhoneNumber } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { UserRegistrationData, UserRegistrationResponse } from '@/types/user';
+import { emailService } from '@/lib/aws-ses';
 
 export async function POST(request: NextRequest) {
   try {
@@ -278,6 +279,23 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('User registered successfully:', { uid: user.uid, email: user.email });
+
+    // Send welcome email (non-blocking)
+    try {
+      const emailResult = await emailService.sendWelcomeEmail(
+        user.email, 
+        `${user.firstName} ${user.lastName}`
+      );
+      
+      if (emailResult.success) {
+        console.log('Welcome email sent successfully');
+      } else {
+        console.error('Failed to send welcome email:', emailResult.error);
+      }
+    } catch (emailError) {
+      console.error('Email service error during registration:', emailError);
+      // Don't fail registration if email fails
+    }
 
     return NextResponse.json({
       success: true,
