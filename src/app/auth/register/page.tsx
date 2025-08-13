@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { UserRegistrationResponse } from '@/types/user';
 import LivenessDetection from '@/components/LivenessDetection';
+import EnhancedBiometricScheduling from '@/components/EnhancedBiometricScheduling';
 
 interface FormData {
   firstName: string;
@@ -19,7 +20,7 @@ interface FormData {
   livenessVerified: boolean;
 }
 
-type RegistrationStep = 'personal' | 'verification' | 'password' | 'complete';
+type RegistrationStep = 'personal' | 'verification' | 'password' | 'biometric' | 'complete';
 
 interface VerificationResult {
   success: boolean;
@@ -58,6 +59,8 @@ export default function RegisterPage() {
   const [isCapturingFace, setIsCapturingFace] = useState(false);
   const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
   const [showLivenessDetection, setShowLivenessDetection] = useState(false);
+  const [userUid, setUserUid] = useState<string>('');
+  const [biometricAppointment, setBiometricAppointment] = useState<any>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -256,16 +259,12 @@ export default function RegisterPage() {
       const result: UserRegistrationResponse = await response.json();
 
       if (result.success && result.uid) {
-        setCurrentStep('complete');
+        setUserUid(result.uid);
+        setCurrentStep('biometric');
         setMessage({ 
           type: 'success', 
-          text: 'Account created successfully! Redirecting to home...' 
+          text: `Welcome ${formData.firstName}! Please schedule your biometric fingerprint collection appointment.` 
         });
-        
-        // Redirect to home page after a short delay
-        setTimeout(() => {
-          router.push('/');
-        }, 3000);
       } else {
         setMessage({ type: 'error', text: result.message || 'Registration failed' });
       }
@@ -387,21 +386,36 @@ export default function RegisterPage() {
     setShowLivenessDetection(true);
   };
 
+  const handleAppointmentBooked = (appointment: any) => {
+    setBiometricAppointment(appointment);
+    setCurrentStep('complete');
+    setMessage({
+      type: 'success',
+      text: 'Biometric appointment scheduled successfully! Your Digital ID application is now complete.'
+    });
+    
+    // Redirect to dashboard after short delay
+    setTimeout(() => {
+      router.push('/dashboard');
+    }, 3000);
+  };
+
   const renderProgressBar = () => (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-gray-700">Registration Progress</span>
         <span className="text-sm text-gray-500">
-          Step {currentStep === 'personal' ? '1' : currentStep === 'verification' ? '2' : currentStep === 'password' ? '3' : '4'} of 4
+          Step {currentStep === 'personal' ? '1' : currentStep === 'verification' ? '2' : currentStep === 'password' ? '3' : currentStep === 'biometric' ? '4' : '5'} of 5
         </span>
       </div>
       <div className="w-full bg-gray-200 rounded-full h-2">
         <div 
           className="bg-gradient-to-r from-yellow-400 to-amber-500 h-2 rounded-full transition-all duration-500"
           style={{
-            width: currentStep === 'personal' ? '25%' : 
-                   currentStep === 'verification' ? '50%' : 
-                   currentStep === 'password' ? '75%' : '100%'
+            width: currentStep === 'personal' ? '20%' : 
+                   currentStep === 'verification' ? '40%' : 
+                   currentStep === 'password' ? '60%' : 
+                   currentStep === 'biometric' ? '80%' : '100%'
           }}
         ></div>
       </div>
@@ -422,6 +436,7 @@ export default function RegisterPage() {
             {currentStep === 'personal' ? 'Enter your personal information' :
              currentStep === 'verification' ? 'Verify your identity' :
              currentStep === 'password' ? 'Set your password' :
+             currentStep === 'biometric' ? 'Schedule biometric appointment' :
              'Registration complete'}
           </p>
         </div>
@@ -721,7 +736,18 @@ export default function RegisterPage() {
           </form>
         )}
 
-        {/* Step 4: Registration Complete */}
+        {/* Step 4: Biometric Appointment Scheduling */}
+        {currentStep === 'biometric' && userUid && (
+          <div className="mt-8 bg-white rounded-lg p-6 shadow-sm">
+            <EnhancedBiometricScheduling
+              userUid={userUid}
+              userName={`${formData.firstName} ${formData.lastName}`}
+              onAppointmentBooked={handleAppointmentBooked}
+            />
+          </div>
+        )}
+
+        {/* Step 5: Registration Complete */}
         {currentStep === 'complete' && (
           <div className="mt-8 text-center space-y-6">
             <div className="mx-auto h-20 w-20 bg-green-100 rounded-full flex items-center justify-center">
@@ -731,7 +757,20 @@ export default function RegisterPage() {
             </div>
             <div>
               <h3 className="text-2xl font-bold text-gray-900">Registration Complete!</h3>
-              <p className="mt-2 text-gray-600">Your SevisPass account has been successfully created.</p>
+              <p className="mt-2 text-gray-600">
+                Your SevisPass account has been successfully created and your biometric appointment is scheduled.
+              </p>
+              {biometricAppointment && (
+                <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm text-amber-800">
+                    <strong>Appointment Details:</strong><br />
+                    📍 {biometricAppointment.location.name}<br />
+                    📅 {new Date(biometricAppointment.appointmentDate).toLocaleDateString()}<br />
+                    🕒 {biometricAppointment.appointmentTime}<br />
+                    📞 {biometricAppointment.location.phone}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}

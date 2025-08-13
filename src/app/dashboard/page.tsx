@@ -4,6 +4,7 @@ import Header from '@/components/Header';
 import IdentityCard from '@/components/IdentityCard';
 import ServiceCard from '@/components/ServiceCard';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import BiometricDashboard from '@/components/BiometricDashboard';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function DashboardPage() {
@@ -63,6 +64,20 @@ export default function DashboardPage() {
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
                     <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a2 2 0 012-2h4a2 2 0 012 2v2h4a2 2 0 012 2v2a2 2 0 01-2 2h-1l-.764 10.074A2 2 0 0118.263 21H5.737a2 2 0 01-1.973-1.926L3 9H2a2 2 0 01-1-1V6a2 2 0 012-2h4z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium block">Biometric Appointment</span>
+                    <span className="text-xs text-gray-500">Schedule fingerprint collection</span>
+                  </div>
+                </div>
+              </button>
+              
+              <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-amber-300 hover:bg-amber-50 transition-colors">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
+                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
@@ -71,6 +86,14 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Biometric Appointment Section */}
+        <div className="mb-8">
+          <BiometricDashboard 
+            userUid={user?.uid || ''} 
+            userName={`${user?.firstName} ${user?.lastName}`} 
+          />
         </div>
 
         {/* Verifiable Credentials Section */}
