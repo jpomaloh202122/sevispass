@@ -9,6 +9,7 @@ interface LoginData {
 
 interface LoginResponse {
   success: boolean;
+  requires2FA?: boolean;  // New field for 2FA requirement
   uid?: string;
   user?: {
     uid: string;
@@ -95,23 +96,46 @@ export async function POST(request: NextRequest) {
       } as LoginResponse, { status: 401 });
     }
 
-    console.log('User logged in successfully:', { uid: user.uid, email: user.email });
+    console.log('Password verified for user:', { uid: user.uid, email: user.email });
 
-    return NextResponse.json({
-      success: true,
-      uid: user.uid,
-      user: {
+    // Send 2FA code instead of completing login
+    try {
+      const send2FAResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3005'}/api/auth/send-2fa-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userUid: user.uid,
+          email: user.email,
+          userName: `${user.firstName} ${user.lastName}`
+        })
+      });
+
+      const send2FAResult = await send2FAResponse.json();
+
+      if (!send2FAResult.success) {
+        console.error('Failed to send 2FA code:', send2FAResult.message);
+        return NextResponse.json({
+          success: false,
+          message: 'Failed to send verification code. Please try again.'
+        } as LoginResponse, { status: 500 });
+      }
+
+      console.log('2FA code sent successfully for login:', user.email);
+
+      return NextResponse.json({
+        success: true,
+        requires2FA: true,
         uid: user.uid,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        nid: user.nid,
-        phoneNumber: user.phoneNumber,
-        address: user.address,
-        createdAt: user.createdAt
-      },
-      message: 'Login successful'
-    } as LoginResponse);
+        message: 'Verification code sent to your email. Please check your inbox and enter the 6-digit code to complete login.'
+      } as LoginResponse);
+
+    } catch (send2FAError) {
+      console.error('Error sending 2FA code:', send2FAError);
+      return NextResponse.json({
+        success: false,
+        message: 'Failed to send verification code. Please try again.'
+      } as LoginResponse, { status: 500 });
+    }
 
   } catch (error) {
     console.error('Login error:', error);

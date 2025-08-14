@@ -752,6 +752,118 @@ If you need to make further changes to your appointment, please log in to your S
       textBody,
     });
   }
+
+  async send2FACode(userEmail: string, userName: string, code: string): Promise<{ success: boolean; error?: string }> {
+    const subject = 'SevisPass Login Verification - 2FA Code';
+    
+    const htmlBody = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Login Verification</title>
+      </head>
+      <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f7f7f7;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: white;">
+          <!-- Header -->
+          <div style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 40px 20px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">🔐 Login Verification</h1>
+            <p style="color: #fecaca; margin: 10px 0 0 0; font-size: 16px;">Two-Factor Authentication</p>
+          </div>
+          
+          <!-- Content -->
+          <div style="padding: 40px 20px;">
+            <h2 style="color: #1f2937; margin: 0 0 20px 0; font-size: 24px;">Hello ${userName}!</h2>
+            
+            <p style="color: #4b5563; line-height: 1.6; margin: 0 0 30px 0; font-size: 16px;">
+              Someone is attempting to log in to your SevisPass account. To complete the login process, please enter the verification code below:
+            </p>
+            
+            <!-- 2FA Code Box -->
+            <div style="background-color: #fef2f2; border: 2px solid #dc2626; border-radius: 12px; padding: 30px; margin: 30px 0; text-align: center;">
+              <p style="color: #991b1b; margin: 0 0 15px 0; font-size: 16px; font-weight: bold;">🔒 Your Login Verification Code</p>
+              <div style="background-color: white; border: 1px solid #dc2626; border-radius: 8px; padding: 20px; margin: 15px 0;">
+                <span style="font-size: 36px; font-weight: bold; color: #dc2626; letter-spacing: 12px; font-family: 'Courier New', monospace;">
+                  ${code}
+                </span>
+              </div>
+              <p style="color: #6b7280; margin: 15px 0 0 0; font-size: 14px;">
+                ⏰ This code expires in 10 minutes
+              </p>
+            </div>
+            
+            <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 30px 0;">
+              <h3 style="color: #92400e; margin: 0 0 15px 0; font-size: 18px;">🛡️ Security Information:</h3>
+              <ul style="color: #92400e; margin: 0; padding-left: 20px; font-size: 14px;">
+                <li style="margin: 8px 0;">This code is required every time you log in</li>
+                <li style="margin: 8px 0;">Never share this code with anyone</li>
+                <li style="margin: 8px 0;">SevisPass staff will never ask for your login codes</li>
+                <li style="margin: 8px 0;">If you didn't attempt to log in, please change your password</li>
+              </ul>
+            </div>
+            
+            <div style="background-color: #dbeafe; border: 1px solid #3b82f6; border-radius: 8px; padding: 20px; margin: 30px 0; text-align: center;">
+              <h3 style="color: #1e40af; margin: 0 0 15px 0; font-size: 18px;">🔐 Enhanced Security</h3>
+              <p style="color: #1e40af; margin: 0; font-size: 14px; line-height: 1.5;">
+                This Two-Factor Authentication (2FA) helps protect your Digital ID account from unauthorized access. 
+                You'll receive this code every time you log in to ensure it's really you.
+              </p>
+            </div>
+            
+            <p style="color: #6b7280; line-height: 1.6; margin: 30px 0 0 0; font-size: 14px;">
+              If you're experiencing issues with login verification, please contact our support team for assistance.
+            </p>
+          </div>
+          
+          <!-- Footer -->
+          <div style="background-color: #f9fafb; padding: 30px 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+            <p style="color: #6b7280; margin: 0; font-size: 14px;">
+              © 2024 SevisPass - Government of Papua New Guinea<br>
+              Digital Identity Platform
+            </p>
+            <p style="color: #9ca3af; margin: 10px 0 0 0; font-size: 12px;">
+              This is an automated security message. Please do not reply to this email.
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const textBody = `
+🔐 SevisPass Login Verification - 2FA Code
+
+Hello ${userName},
+
+Someone is attempting to log in to your SevisPass account. To complete the login process, please enter the verification code below:
+
+🔒 Your Login Verification Code: ${code}
+
+⏰ This code expires in 10 minutes.
+
+🛡️ Security Information:
+- This code is required every time you log in
+- Never share this code with anyone
+- SevisPass staff will never ask for your login codes
+- If you didn't attempt to log in, please change your password
+
+🔐 Enhanced Security:
+This Two-Factor Authentication (2FA) helps protect your Digital ID account from unauthorized access. You'll receive this code every time you log in to ensure it's really you.
+
+If you're experiencing issues with login verification, please contact our support team for assistance.
+
+© 2024 SevisPass - Government of Papua New Guinea
+This is an automated security message. Please do not reply to this email.
+    `;
+
+    return await this.sendEmail({
+      to: [userEmail],
+      subject,
+      htmlBody,
+      textBody,
+    });
+  }
 }
 
 // Export singleton instance

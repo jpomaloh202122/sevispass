@@ -4,9 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import TwoFactorVerification from '@/components/TwoFactorVerification';
 
 interface LoginResponse {
   success: boolean;
+  requires2FA?: boolean;
   uid?: string;
   user?: {
     uid: string;
@@ -30,6 +32,8 @@ export default function LoginPage() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showTwoFA, setShowTwoFA] = useState(false);
+  const [userUid, setUserUid] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,17 +66,18 @@ export default function LoginPage() {
         return;
       }
 
-      if (result.success && result.user) {
-        // Store user in context
+      if (result.success && result.requires2FA) {
+        // Show 2FA verification screen
+        setUserUid(result.uid!);
+        setShowTwoFA(true);
+        setMessage({ type: 'success', text: result.message });
+      } else if (result.success && result.user) {
+        // Direct login (should not happen with 2FA enabled)
         login(result.user);
-        
-        // Clear form data
         setFormData({
           email: '',
           password: ''
         });
-        
-        // Redirect to dashboard immediately
         router.push('/dashboard');
       } else {
         setMessage({ type: 'error', text: result.message || 'Login failed' });
@@ -94,6 +99,24 @@ export default function LoginPage() {
       [e.target.name]: e.target.value
     });
   };
+
+  const handleBackFromTwoFA = () => {
+    setShowTwoFA(false);
+    setUserUid('');
+    setMessage(null);
+    setIsLoading(false);
+  };
+
+  // Show 2FA verification if required
+  if (showTwoFA) {
+    return (
+      <TwoFactorVerification 
+        userUid={userUid}
+        userEmail={formData.email}
+        onBack={handleBackFromTwoFA}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-100 flex items-center justify-center px-4">
