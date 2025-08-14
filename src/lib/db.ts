@@ -189,12 +189,15 @@ export const db = {
       if (data.include?.location) {
         const { data: locationData, error: locationError } = await supabaseAdmin
           .from('biometric_locations')
-          .select('name, address, phone, operating_hours as operatingHours')
+          .select('name, address, phone, operating_hours')
           .eq('id', result.location_id)
           .single()
 
         if (locationError) throw new Error(locationError.message)
-        result.location = locationData
+        result.location = {
+          ...locationData,
+          operatingHours: locationData.operating_hours
+        }
       }
 
       return result
@@ -219,12 +222,15 @@ export const db = {
       if (query.include?.location && data) {
         const { data: locationData, error: locationError } = await supabaseAdmin
           .from('biometric_locations')
-          .select('name, address, phone, operating_hours as operatingHours, electorate')
+          .select('name, address, phone, operating_hours, electorate')
           .eq('id', data.location_id)
           .single()
 
         if (locationError) throw new Error(locationError.message)
-        data.location = locationData
+        data.location = {
+          ...locationData,
+          operatingHours: locationData.operating_hours
+        }
       }
       
       return data
@@ -274,10 +280,122 @@ export const db = {
         supabaseQuery = supabaseQuery.eq(key, value)
       })
 
-      const { data, error } = await supabaseQuery.select().single()
+      const { data, error } = await supabaseQuery.select('id, user_uid, location_id, appointment_date, appointment_time, status, created_at, updated_at').single()
       
       if (error) throw new Error(error.message)
       return data
+    }
+  },
+
+  // Email Verification Codes
+  emailVerificationCode: {
+    async create(data: { 
+      email: string; 
+      code: string; 
+      userUid?: string; 
+      purpose?: string; 
+      expiresAt: string;
+      maxAttempts?: number;
+    }) {
+      const { data: result, error } = await supabaseAdmin
+        .from('email_verification_codes')
+        .insert({
+          email: data.email,
+          code: data.code,
+          user_uid: data.userUid,
+          purpose: data.purpose || 'registration',
+          expires_at: data.expiresAt,
+          max_attempts: data.maxAttempts || 5
+        })
+        .select()
+        .single()
+      
+      if (error) throw new Error(error.message)
+      return result
+    },
+
+    async findValid(email: string, code: string, purpose: string = 'registration') {
+      const { data, error } = await supabaseAdmin
+        .from('email_verification_codes')
+        .select('*')
+        .eq('email', email)
+        .eq('code', code)
+        .eq('purpose', purpose)
+        .eq('is_used', false)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+      
+      if (error) throw new Error(error.message)
+      return data?.[0] || null
+    },
+
+    async findLatest(email: string, purpose: string = 'registration') {
+      const { data, error } = await supabaseAdmin
+        .from('email_verification_codes')
+        .select('*')
+        .eq('email', email)
+        .eq('purpose', purpose)
+        .order('created_at', { ascending: false })
+        .limit(1)
+      
+      if (error) throw new Error(error.message)
+      return data?.[0] || null
+    },
+
+    async markAsUsed(id: number) {
+      const { data, error } = await supabaseAdmin
+        .from('email_verification_codes')
+        .update({ is_used: true })
+        .eq('id', id)
+        .select()
+        .single()
+      
+      if (error) throw new Error(error.message)
+      return data
+    },
+
+    async incrementAttempts(id: number) {
+      const { data, error } = await supabaseAdmin
+        .from('email_verification_codes')
+        .update({ attempts: supabaseAdmin.rpc('increment_attempts', { row_id: id }) })
+        .eq('id', id)
+        .select()
+        .single()
+      
+      if (error) {
+        // Fallback to manual increment if RPC doesn't exist
+        const { data: current, error: fetchError } = await supabaseAdmin
+          .from('email_verification_codes')
+          .select('attempts')
+          .eq('id', id)
+          .single()
+        
+        if (fetchError) throw new Error(fetchError.message)
+        
+        const { data: updated, error: updateError } = await supabaseAdmin
+          .from('email_verification_codes')
+          .update({ attempts: (current.attempts || 0) + 1 })
+          .eq('id', id)
+          .select()
+          .single()
+        
+        if (updateError) throw new Error(updateError.message)
+        return updated
+      }
+      
+      return data
+    },
+
+    async cleanup() {
+      const { data, error } = await supabaseAdmin
+        .from('email_verification_codes')
+        .delete()
+        .or(`expires_at.lt.${new Date().toISOString()},is_used.eq.true`)
+        .select()
+      
+      if (error) throw new Error(error.message)
+      return { count: data?.length || 0 }
     }
   }
 }

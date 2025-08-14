@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { emailService } from '@/lib/aws-ses';
+import { emailService } from '@/lib/resend';
 import { format } from 'date-fns';
 
 export async function POST(request: NextRequest) {

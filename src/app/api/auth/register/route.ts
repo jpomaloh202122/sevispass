@@ -3,7 +3,7 @@ import { generateUID } from '@/lib/uid-generator';
 import { hashPassword, validateEmail, validatePassword, validateNidOrPassport, validatePhoneNumber } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { UserRegistrationData, UserRegistrationResponse } from '@/types/user';
-import { emailService } from '@/lib/aws-ses';
+import { emailService } from '@/lib/resend';
 
 export async function POST(request: NextRequest) {
   try {

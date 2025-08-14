@@ -153,6 +153,8 @@ export default function BiometricDashboard({ userUid, userName }: BiometricDashb
           userUid={userUid}
           userName={userName}
           onAppointmentBooked={handleAppointmentBooked}
+          isRescheduling={true}
+          existingAppointment={appointment}
         />
       </div>
     );

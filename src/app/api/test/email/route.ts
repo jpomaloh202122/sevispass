@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { emailService } from '@/lib/aws-ses';
+import { emailService } from '@/lib/resend';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,28 +12,28 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log('Testing AWS SES configuration with email:', testEmail);
+    console.log('Testing Resend configuration with email:', testEmail);
 
     // Test basic email sending
     const result = await emailService.sendEmail({
       to: [testEmail],
-      subject: 'AWS SES Configuration Test - SevisPass',
+      subject: 'Resend Configuration Test - SevisPass',
       htmlBody: `
         <html>
         <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 20px; text-align: center;">
-            <h1 style="color: white; margin: 0;">AWS SES Test Email</h1>
+            <h1 style="color: white; margin: 0;">Resend Test Email</h1>
           </div>
           <div style="padding: 20px;">
             <h2>SevisPass Email Configuration Test</h2>
-            <p>This is a test email to verify that AWS SES is properly configured for SevisPass.</p>
+            <p>This is a test email to verify that Resend is properly configured for SevisPass.</p>
             <p><strong>Test Details:</strong></p>
             <ul>
-              <li>Service: AWS SES</li>
+              <li>Service: Resend</li>
               <li>Application: SevisPass Digital ID Platform</li>
               <li>Test Time: ${new Date().toLocaleString()}</li>
             </ul>
-            <p style="color: #059669;">✅ If you receive this email, AWS SES is working correctly!</p>
+            <p style="color: #059669;">✅ If you receive this email, Resend is working correctly!</p>
           </div>
           <div style="background-color: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; color: #6b7280;">
             © 2024 SevisPass - Government of Papua New Guinea
@@ -42,16 +42,16 @@ export async function POST(request: NextRequest) {
         </html>
       `,
       textBody: `
-AWS SES Configuration Test - SevisPass
+Resend Configuration Test - SevisPass
 
-This is a test email to verify that AWS SES is properly configured for SevisPass.
+This is a test email to verify that Resend is properly configured for SevisPass.
 
 Test Details:
-- Service: AWS SES  
+- Service: Resend  
 - Application: SevisPass Digital ID Platform
 - Test Time: ${new Date().toLocaleString()}
 
-✅ If you receive this email, AWS SES is working correctly!
+✅ If you receive this email, Resend is working correctly!
 
 © 2024 SevisPass - Government of Papua New Guinea
       `
