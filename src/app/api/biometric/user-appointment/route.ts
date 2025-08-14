@@ -12,23 +12,13 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // First try to find a scheduled appointment
-    let appointment = await db.biometricAppointment.findMany({
+    // Only look for scheduled appointments for dashboard purposes
+    const appointment = await db.biometricAppointment.findMany({
       where: {
         user_uid: userUid,
         status: 'scheduled'
       }
     });
-
-    // If no scheduled appointment, get the most recent appointment of any status
-    if (appointment.length === 0) {
-      const allAppointments = await db.biometricAppointment.findMany({
-        where: {
-          user_uid: userUid
-        }
-      });
-      appointment = allAppointments.length > 0 ? [allAppointments[allAppointments.length - 1]] : [];
-    }
 
     const userAppointment = appointment.length > 0 ? appointment[0] : null;
 

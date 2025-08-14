@@ -41,6 +41,9 @@ export default function BiometricDashboard({ userUid, userName }: BiometricDashb
     try {
       setIsLoading(true);
       
+      console.log('=== DASHBOARD DEBUG ===');
+      console.log('Fetching appointment for userUid:', userUid);
+      
       const response = await fetch('/api/biometric/user-appointment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -49,14 +52,23 @@ export default function BiometricDashboard({ userUid, userName }: BiometricDashb
 
       const data = await response.json();
       
+      console.log('API Response:', JSON.stringify(data, null, 2));
+      
       if (data.success) {
+        console.log('Setting hasAppointment to:', data.hasAppointment);
+        console.log('Setting appointment to:', data.appointment);
         setHasAppointment(data.hasAppointment);
         setAppointment(data.appointment || null);
       } else {
         console.error('API Error:', data.message);
+        setHasAppointment(false);
+        setAppointment(null);
       }
+      console.log('=== END DASHBOARD DEBUG ===');
     } catch (error) {
       console.error('Error fetching appointment:', error);
+      setHasAppointment(false);
+      setAppointment(null);
     } finally {
       setIsLoading(false);
     }
@@ -153,9 +165,15 @@ export default function BiometricDashboard({ userUid, userName }: BiometricDashb
           userUid={userUid}
           userName={userName}
           onAppointmentBooked={handleAppointmentBooked}
-          isRescheduling={true}
+          isRescheduling={hasAppointment}
           existingAppointment={appointment}
         />
+        {/* Debug info for component props */}
+        <div style={{ display: 'none' }}>
+          Debug - hasAppointment: {hasAppointment ? 'true' : 'false'}
+          Debug - appointment: {JSON.stringify(appointment)}
+          Debug - isRescheduling prop: {hasAppointment ? 'true' : 'false'}
+        </div>
       </div>
     );
   }

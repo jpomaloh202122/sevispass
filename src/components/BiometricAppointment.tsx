@@ -55,6 +55,9 @@ export default function BiometricAppointment({
   const [isBooking, setIsBooking] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  // Determine if this is truly a reschedule (has existing scheduled appointment) or initial booking
+  const shouldReschedule = isRescheduling && existingAppointment && existingAppointment.status === 'scheduled';
+
   // Generate next 14 business days for appointment options
   const getAvailableDates = () => {
     const dates = [];
@@ -172,12 +175,17 @@ export default function BiometricAppointment({
   const bookAppointment = async () => {
     if (!selectedLocation || !selectedDate || !selectedTimeSlot) return;
 
+    console.log('=== BIOMETRIC APPOINTMENT DEBUG ===');
+    console.log('isRescheduling prop:', isRescheduling);
+    console.log('existingAppointment:', existingAppointment);
+    console.log('shouldReschedule (calculated):', shouldReschedule);
+
     setIsBooking(true);
     setMessage(null);
 
     try {
-      const endpoint = isRescheduling ? '/api/biometric/reschedule' : '/api/biometric/book';
-      const requestBody = isRescheduling ? {
+      const endpoint = shouldReschedule ? '/api/biometric/reschedule' : '/api/biometric/book';
+      const requestBody = shouldReschedule ? {
         userUid: userUid,
         newLocationId: selectedLocation.id,
         newAppointmentDate: selectedDate,
@@ -189,6 +197,10 @@ export default function BiometricAppointment({
         appointmentTime: selectedTimeSlot.startTime
       };
 
+      console.log('Selected endpoint:', endpoint);
+      console.log('Request body:', JSON.stringify(requestBody, null, 2));
+      console.log('=== END BIOMETRIC APPOINTMENT DEBUG ===');
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -198,15 +210,15 @@ export default function BiometricAppointment({
       const data = await response.json();
       
       if (data.success) {
-        const successMessage = isRescheduling ? 'Appointment rescheduled successfully!' : 'Appointment booked successfully!';
+        const successMessage = shouldReschedule ? 'Appointment rescheduled successfully!' : 'Appointment booked successfully!';
         setMessage({ type: 'success', text: successMessage });
         onAppointmentBooked(data.appointment);
       } else {
         setMessage({ type: 'error', text: data.message });
       }
     } catch (error) {
-      console.error(`Error ${isRescheduling ? 'rescheduling' : 'booking'} appointment:`, error);
-      const errorMessage = isRescheduling ? 'Failed to reschedule appointment. Please try again.' : 'Failed to book appointment. Please try again.';
+      console.error(`Error ${shouldReschedule ? 'rescheduling' : 'booking'} appointment:`, error);
+      const errorMessage = shouldReschedule ? 'Failed to reschedule appointment. Please try again.' : 'Failed to book appointment. Please try again.';
       setMessage({ type: 'error', text: errorMessage });
     } finally {
       setIsBooking(false);
@@ -267,10 +279,10 @@ export default function BiometricAppointment({
       {/* Header */}
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-900 mb-2">
-          {isRescheduling ? 'Reschedule Your Appointment' : 'Schedule Biometric Appointment'}
+          {shouldReschedule ? 'Reschedule Your Appointment' : 'Schedule Biometric Appointment'}
         </h2>
         <p className="text-gray-600 mb-6">
-          {isRescheduling 
+          {shouldReschedule 
             ? 'Update your appointment details with our simple 4-step process' 
             : 'Complete your Digital ID application with our simple 4-step process'}
         </p>
@@ -313,7 +325,7 @@ export default function BiometricAppointment({
         </div>
 
         {/* Current Appointment (for rescheduling) */}
-        {isRescheduling && existingAppointment && (
+        {shouldReschedule && existingAppointment && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <h4 className="text-sm font-semibold text-blue-900 mb-2">Current Appointment:</h4>
             <div className="text-sm text-blue-800">
@@ -510,10 +522,10 @@ export default function BiometricAppointment({
           <div className="p-8">
             <div className="text-center mb-8">
               <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                {isRescheduling ? 'Confirm Your New Appointment' : 'Confirm Your Appointment'}
+                {shouldReschedule ? 'Confirm Your New Appointment' : 'Confirm Your Appointment'}
               </h3>
               <p className="text-gray-600">
-                {isRescheduling 
+                {shouldReschedule 
                   ? 'Please review your new appointment details before confirming the reschedule' 
                   : 'Please review your appointment details before confirming'}
               </p>
@@ -587,10 +599,10 @@ export default function BiometricAppointment({
                 {isBooking ? (
                   <span className="flex items-center justify-center">
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-3"></div>
-                    {isRescheduling ? 'Rescheduling Your Appointment...' : 'Booking Your Appointment...'}
+                    {shouldReschedule ? 'Rescheduling Your Appointment...' : 'Booking Your Appointment...'}
                   </span>
                 ) : (
-                  isRescheduling ? 'Confirm Appointment Reschedule' : 'Confirm Biometric Appointment'
+                  shouldReschedule ? 'Confirm Appointment Reschedule' : 'Confirm Biometric Appointment'
                 )}
               </button>
             </div>
