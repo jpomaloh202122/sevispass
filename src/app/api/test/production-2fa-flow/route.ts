@@ -1,6 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
+export async function GET() {
+  // Quick production environment check
+  const check = {
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    hasResendApiKey: !!process.env.RESEND_API_KEY,
+    hasResendFromEmail: !!process.env.RESEND_FROM_EMAIL,
+    resendFromEmail: process.env.RESEND_FROM_EMAIL || 'NOT_SET',
+    apiKeyPrefix: process.env.RESEND_API_KEY ? 
+      process.env.RESEND_API_KEY.substring(0, 8) + '...' : 'NOT_SET',
+    hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    hasServiceRole: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+  };
+
+  const allConfigured = check.hasResendApiKey && 
+                       check.hasResendFromEmail && 
+                       check.hasSupabaseUrl && 
+                       check.hasServiceRole;
+
+  return NextResponse.json({
+    success: allConfigured,
+    message: allConfigured ? 
+      '✅ All environment variables configured' : 
+      '❌ Missing environment variables',
+    details: check,
+    nextSteps: allConfigured ? 
+      'Environment is ready - test 2FA flow' : 
+      'Add missing environment variables to Netlify dashboard'
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
