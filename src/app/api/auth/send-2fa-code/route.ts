@@ -90,6 +90,9 @@ export async function POST(request: NextRequest) {
           user_uid: userUid,
           code: code,
           expires_at: expiresAt.toISOString(),
+          attempts: 0,
+          max_attempts: 5,
+          is_used: false,
           ip_address: ipAddress,
           user_agent: userAgent
         });
@@ -116,19 +119,47 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
+    // Check email service configuration
+    const resendApiKey = process.env.RESEND_API_KEY;
+    const resendFromEmail = process.env.RESEND_FROM_EMAIL;
+    
+    if (!resendApiKey || !resendFromEmail) {
+      console.error('Email service not configured:', {
+        hasApiKey: !!resendApiKey,
+        hasFromEmail: !!resendFromEmail
+      });
+      
+      // In production without email service, fail gracefully
+      if (process.env.NODE_ENV === 'production') {
+        return NextResponse.json({
+          success: false,
+          message: 'Email service not configured. Please contact support.'
+        }, { status: 500 });
+      }
+      
+      // In development, allow bypass
+      return NextResponse.json({
+        success: true,
+        message: 'Development mode: Email service not configured, use any 6-digit code'
+      });
+    }
+
     // Send email with 2FA code
     try {
+      console.log('Attempting to send 2FA code to:', email);
       const emailResult = await emailService.send2FACode(email, userName, code);
       
       if (!emailResult.success) {
         console.error('Failed to send 2FA email:', emailResult.error);
         
-        // Remove the code since we couldn't send the email
-        await supabaseAdmin
-          .from('login_2fa_codes')
-          .update({ is_used: true })
-          .eq('user_uid', userUid)
-          .eq('code', code);
+        // Remove the code since we couldn't send the email (only in production)
+        if (process.env.NODE_ENV !== 'development') {
+          await supabaseAdmin
+            .from('login_2fa_codes')
+            .update({ is_used: true })
+            .eq('user_uid', userUid)
+            .eq('code', code);
+        }
 
         return NextResponse.json({
           success: false,
