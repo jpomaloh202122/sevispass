@@ -28,7 +28,7 @@ async function executeMigration() {
     const createTableSQL = `
       CREATE TABLE IF NOT EXISTS public.login_2fa_codes (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_uid UUID NOT NULL,
+        user_uid VARCHAR(255) NOT NULL,
         code VARCHAR(6) NOT NULL CHECK (code ~ '^[0-9]{6}$'),
         expires_at TIMESTAMPTZ NOT NULL,
         attempts INTEGER DEFAULT 0 NOT NULL CHECK (attempts >= 0),
@@ -69,7 +69,7 @@ async function executeMigration() {
     // Create policies
     const policies = [
       `CREATE POLICY IF NOT EXISTS "Service role can manage all 2FA codes" ON public.login_2fa_codes FOR ALL TO service_role USING (true) WITH CHECK (true);`,
-      `CREATE POLICY IF NOT EXISTS "Users can access their own 2FA codes" ON public.login_2fa_codes FOR ALL TO authenticated USING (user_uid = auth.uid()) WITH CHECK (user_uid = auth.uid());`
+      `CREATE POLICY IF NOT EXISTS "Users can access their own 2FA codes" ON public.login_2fa_codes FOR ALL TO authenticated USING (user_uid = auth.uid()::text) WITH CHECK (user_uid = auth.uid()::text);`
     ];
 
     for (const policySQL of policies) {

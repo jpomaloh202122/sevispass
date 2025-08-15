@@ -5,7 +5,7 @@
 -- Create the login_2fa_codes table
 CREATE TABLE IF NOT EXISTS public.login_2fa_codes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_uid UUID NOT NULL,
+    user_uid VARCHAR(255) NOT NULL,
     code VARCHAR(6) NOT NULL,
     expires_at TIMESTAMPTZ NOT NULL,
     attempts INTEGER DEFAULT 0 NOT NULL,
@@ -28,13 +28,25 @@ CREATE TABLE IF NOT EXISTS public.login_2fa_codes (
     )
 );
 
--- Add foreign key constraint to users table (if it exists)
+-- Add foreign key constraint to users table (if it exists and has compatible type)
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
-        ALTER TABLE public.login_2fa_codes 
-        ADD CONSTRAINT fk_login_2fa_codes_user_uid 
-        FOREIGN KEY (user_uid) REFERENCES public.users(uid) ON DELETE CASCADE;
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' AND table_name = 'users'
+    ) THEN
+        -- Check if uid column exists and is compatible
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_schema = 'public' 
+            AND table_name = 'users' 
+            AND column_name = 'uid'
+            AND data_type IN ('character varying', 'varchar', 'text')
+        ) THEN
+            ALTER TABLE public.login_2fa_codes 
+            ADD CONSTRAINT fk_login_2fa_codes_user_uid 
+            FOREIGN KEY (user_uid) REFERENCES public.users(uid) ON DELETE CASCADE;
+        END IF;
     END IF;
 END $$;
 
@@ -47,8 +59,9 @@ CREATE INDEX IF NOT EXISTS idx_login_2fa_codes_created_at ON public.login_2fa_co
 -- Compound index for common queries
 CREATE INDEX IF NOT EXISTS idx_login_2fa_codes_user_active ON public.login_2fa_codes(user_uid, is_used, created_at DESC);
 
--- Create updated_at trigger function if it doesn't exist
-CREATE OR REPLACE FUNCTION update_updated_at_column()
+-- Drop and recreate updated_at trigger function
+DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
+CREATE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
@@ -82,8 +95,8 @@ CREATE POLICY "Users can access their own 2FA codes"
 ON public.login_2fa_codes
 FOR ALL
 TO authenticated
-USING (user_uid = auth.uid())
-WITH CHECK (user_uid = auth.uid());
+USING (user_uid = auth.uid()::text)
+WITH CHECK (user_uid = auth.uid()::text);
 
 -- Policy for anonymous users (no access)
 DROP POLICY IF EXISTS "Anonymous users cannot access 2FA codes" ON public.login_2fa_codes;
@@ -98,8 +111,9 @@ WITH CHECK (false);
 GRANT ALL ON public.login_2fa_codes TO service_role;
 GRANT SELECT, INSERT, UPDATE ON public.login_2fa_codes TO authenticated;
 
--- Create a function to clean up expired codes (for maintenance)
-CREATE OR REPLACE FUNCTION cleanup_expired_2fa_codes()
+-- Drop and recreate cleanup function
+DROP FUNCTION IF EXISTS cleanup_expired_2fa_codes() CASCADE;
+CREATE FUNCTION cleanup_expired_2fa_codes()
 RETURNS INTEGER AS $$
 DECLARE
     deleted_count INTEGER;
@@ -113,8 +127,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Create a function to get active 2FA code for a user
-CREATE OR REPLACE FUNCTION get_active_2fa_code(p_user_uid UUID, p_code VARCHAR(6))
+-- Drop and recreate get_active_2fa_code function
+DROP FUNCTION IF EXISTS get_active_2fa_code(VARCHAR(255), VARCHAR(6)) CASCADE;
+DROP FUNCTION IF EXISTS get_active_2fa_code(UUID, VARCHAR(6)) CASCADE;
+CREATE FUNCTION get_active_2fa_code(p_user_uid VARCHAR(255), p_code VARCHAR(6))
 RETURNS TABLE (
     id UUID,
     code VARCHAR(6),
@@ -145,8 +161,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Grant execute permissions on functions
 GRANT EXECUTE ON FUNCTION cleanup_expired_2fa_codes() TO service_role;
-GRANT EXECUTE ON FUNCTION get_active_2fa_code(UUID, VARCHAR(6)) TO service_role;
-GRANT EXECUTE ON FUNCTION get_active_2fa_code(UUID, VARCHAR(6)) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_active_2fa_code(VARCHAR(255), VARCHAR(6)) TO service_role;
+GRANT EXECUTE ON FUNCTION get_active_2fa_code(VARCHAR(255), VARCHAR(6)) TO authenticated;
 
 -- Add comments for documentation
 COMMENT ON TABLE public.login_2fa_codes IS 'Stores two-factor authentication codes for login verification';
