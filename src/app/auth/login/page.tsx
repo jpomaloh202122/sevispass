@@ -35,6 +35,7 @@ export default function LoginPage() {
   const [showTwoFA, setShowTwoFA] = useState(false);
   const [userUid, setUserUid] = useState('');
 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -59,7 +60,7 @@ export default function LoginPage() {
         throw new Error('Invalid response format from server');
       }
 
-      // Handle authentication responses (including 401)
+      // Handle authentication responses
       if (!response.ok) {
         setMessage({ type: 'error', text: result.message || 'Login failed' });
         setIsLoading(false);
@@ -106,6 +107,7 @@ export default function LoginPage() {
     setMessage(null);
     setIsLoading(false);
   };
+
 
   // Show 2FA verification if required
   if (showTwoFA) {

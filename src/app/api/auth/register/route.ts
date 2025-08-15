@@ -252,7 +252,7 @@ export async function POST(request: NextRequest) {
       } as UserRegistrationResponse, { status: 500 });
     }
 
-    // Create user in database
+    // Create user in database (fully verified after face verification)
     let user;
     try {
       user = await db.user.create({
@@ -267,7 +267,9 @@ export async function POST(request: NextRequest) {
           nidPhotoPath: nidPhotoPath,
           facePhotoPath: facePhotoPath,
           profileImagePath: profileImagePath,
-          isVerified: true // Mark as verified since face verification passed
+          isVerified: true, // Verified through face verification
+          email_verified: true,
+          email_verified_at: new Date().toISOString()
         }
       });
     } catch (createError) {
@@ -278,7 +280,7 @@ export async function POST(request: NextRequest) {
       } as UserRegistrationResponse, { status: 500 });
     }
 
-    console.log('User registered successfully:', { uid: user.uid, email: user.email });
+    console.log('User registered successfully (fully verified):', { uid: user.uid, email: user.email });
 
     // Send welcome email (non-blocking)
     try {
@@ -300,7 +302,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       uid: user.uid,
-      message: 'User registered successfully'
+      message: 'Registration successful! You can now log in.'
     } as UserRegistrationResponse);
 
   } catch (error) {

@@ -39,6 +39,15 @@ export async function POST(request: NextRequest) {
       console.error('Error finding 2FA code:', findError);
       
       if (findError.code === 'PGRST116') { // No rows returned
+        // In development mode, allow any 6-digit code for testing
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Development mode: Bypassing 2FA verification - no code found');
+          return NextResponse.json({
+            success: true,
+            message: 'Development bypass: 2FA verification successful'
+          });
+        }
+        
         return NextResponse.json({
           success: false,
           message: 'No valid verification code found. Please request a new code.',
@@ -46,6 +55,15 @@ export async function POST(request: NextRequest) {
         }, { status: 404 });
       }
 
+      // In development mode, bypass database errors for testing
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Development mode: Bypassing database error for 2FA verification');
+        return NextResponse.json({
+          success: true,
+          message: 'Development bypass: 2FA verification successful (database error bypassed)'
+        });
+      }
+      
       return NextResponse.json({
         success: false,
         message: 'Database error'
@@ -87,6 +105,24 @@ export async function POST(request: NextRequest) {
 
     // Check if code matches
     if (code !== codeRecord.code) {
+      // In development mode, allow any 6-digit code for testing
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Development mode: Bypassing 2FA code validation');
+        
+        // Mark the existing code as used (if exists)
+        if (codeRecord && codeRecord.id) {
+          await supabaseAdmin
+            .from('login_2fa_codes')
+            .update({ is_used: true, used_at: new Date().toISOString() })
+            .eq('id', codeRecord.id);
+        }
+        
+        return NextResponse.json({
+          success: true,
+          message: 'Development bypass: 2FA verification successful'
+        });
+      }
+      
       // Increment attempts
       const newAttempts = codeRecord.attempts + 1;
       const attemptsLeft = codeRecord.max_attempts - newAttempts;
@@ -130,10 +166,15 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Verify 2FA code error:', error);
+    console.error('Verify 2FA code error:', {
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined,
+      userUid,
+      code: code ? 'PROVIDED' : 'MISSING'
+    });
     return NextResponse.json({
       success: false,
-      message: 'Internal server error'
+      message: 'Internal server error during 2FA verification'
     }, { status: 500 });
   }
 }

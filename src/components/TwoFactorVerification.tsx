@@ -48,7 +48,10 @@ export default function TwoFactorVerification({ userUid, userEmail, onBack }: Tw
 
     // Auto-submit when all digits are entered
     if (newCode.every(digit => digit) && newCode.join('').length === 6) {
-      handleSubmit(newCode.join(''));
+      // Small delay to let user see the complete code before submission
+      setTimeout(() => {
+        handleSubmit(newCode.join(''));
+      }, 300);
     }
   };
 
@@ -104,11 +107,16 @@ export default function TwoFactorVerification({ userUid, userEmail, onBack }: Tw
       const result = await response.json();
 
       if (result.success && result.user) {
+        // Show success message briefly before auto-login
+        setMessage({ type: 'success', text: '✅ Verification successful! Logging you in...' });
+        
         // Complete login by storing user in context
         login(result.user);
         
-        // Redirect to dashboard
-        router.push('/dashboard');
+        // Brief delay to show success message, then redirect
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1500);
       } else {
         setMessage({ type: 'error', text: result.message });
         

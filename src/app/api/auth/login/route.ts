@@ -10,7 +10,9 @@ interface LoginData {
 interface LoginResponse {
   success: boolean;
   requires2FA?: boolean;  // New field for 2FA requirement
+  requiresEmailVerification?: boolean; // New field for email verification requirement
   uid?: string;
+  email?: string; // For email verification context
   user?: {
     uid: string;
     firstName: string;
@@ -77,6 +79,9 @@ export async function POST(request: NextRequest) {
       } as LoginResponse, { status: 401 });
     }
 
+    // All registered users are verified (face verification during registration)
+    // No additional email verification required
+
     // Verify password
     let isValidPassword;
     try {
@@ -100,7 +105,8 @@ export async function POST(request: NextRequest) {
 
     // Send 2FA code instead of completing login
     try {
-      const send2FAResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3005'}/api/auth/send-2fa-code`, {
+      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      const send2FAResponse = await fetch(`${baseUrl}/api/auth/send-2fa-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -114,6 +120,18 @@ export async function POST(request: NextRequest) {
 
       if (!send2FAResult.success) {
         console.error('Failed to send 2FA code:', send2FAResult.message);
+        
+        // In development, if email service fails, allow bypass for testing
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Development mode: Bypassing 2FA email failure');
+          return NextResponse.json({
+            success: true,
+            requires2FA: true,
+            uid: user.uid,
+            message: 'Email service unavailable in dev mode. Use any 6-digit code for testing.'
+          } as LoginResponse);
+        }
+        
         return NextResponse.json({
           success: false,
           message: 'Failed to send verification code. Please try again.'

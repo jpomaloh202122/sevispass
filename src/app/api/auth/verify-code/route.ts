@@ -106,21 +106,74 @@ export async function POST(request: NextRequest) {
       // Continue anyway as the code was valid
     }
 
-    // Update user email verification status if this is for registration
-    if (purpose === 'registration' && verificationRecord.user_uid) {
-      try {
-        await db.user.update({
-          where: { uid: verificationRecord.user_uid },
-          data: { 
-            email_verified: true,
-            email_verified_at: new Date().toISOString()
-          }
-        });
-        console.log('User email verification status updated:', verificationRecord.user_uid);
-      } catch (updateError) {
-        console.warn('Failed to update user verification status:', updateError);
-        // This is not critical for the verification process
+    // Update user verification status if this is for registration
+    if (purpose === 'registration') {
+      let updateSuccess = false;
+      
+      console.log('Starting account activation for email verification:', {
+        email,
+        userUid: verificationRecord.user_uid,
+        purpose
+      });
+      
+      // Try to update by user_uid first
+      if (verificationRecord.user_uid) {
+        try {
+          const updatedUser = await db.user.update({
+            where: { uid: verificationRecord.user_uid },
+            data: { 
+              isVerified: true, // Activate the account
+              email_verified: true,
+              email_verified_at: new Date().toISOString()
+            }
+          });
+          console.log('✅ User account activated after email verification (by UID):', {
+            uid: verificationRecord.user_uid,
+            email: updatedUser.email,
+            isVerified: updatedUser.isVerified,
+            email_verified: updatedUser.email_verified
+          });
+          updateSuccess = true;
+        } catch (updateError) {
+          console.warn('❌ Failed to update user verification status by UID:', {
+            uid: verificationRecord.user_uid,
+            error: updateError instanceof Error ? updateError.message : updateError
+          });
+        }
+      } else {
+        console.log('⚠️ No user_uid found in verification record, will try email fallback');
       }
+      
+      // Fallback: update by email if user_uid method failed
+      if (!updateSuccess) {
+        try {
+          const updatedUser = await db.user.update({
+            where: { email: email },
+            data: { 
+              isVerified: true, // Activate the account
+              email_verified: true,
+              email_verified_at: new Date().toISOString()
+            }
+          });
+          console.log('✅ User account activated after email verification (by email):', {
+            email: email,
+            uid: updatedUser.uid,
+            isVerified: updatedUser.isVerified,
+            email_verified: updatedUser.email_verified
+          });
+          updateSuccess = true;
+        } catch (updateError) {
+          console.error('❌ Failed to update user verification status by email:', {
+            email: email,
+            error: updateError instanceof Error ? updateError.message : updateError,
+            stack: updateError instanceof Error ? updateError.stack : undefined
+          });
+          // Don't fail the verification - log the error but continue
+          console.warn('⚠️ Account activation failed but email verification was successful. User may need manual activation.');
+        }
+      }
+      
+      console.log('Account activation complete. Success:', updateSuccess);
     }
 
     console.log('Email verification successful for:', email);

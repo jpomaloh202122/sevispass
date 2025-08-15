@@ -33,19 +33,29 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify the 2FA code
-    const verify2FAResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3005'}/api/auth/verify-2fa-code`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userUid, code })
-    });
+    let verify2FAResult;
+    try {
+      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      const verify2FAResponse = await fetch(`${baseUrl}/api/auth/verify-2fa-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userUid, code })
+      });
 
-    const verify2FAResult = await verify2FAResponse.json();
+      verify2FAResult = await verify2FAResponse.json();
 
-    if (!verify2FAResult.success) {
+      if (!verify2FAResult.success) {
+        return NextResponse.json({
+          success: false,
+          message: verify2FAResult.message
+        } as Complete2FALoginResponse, { status: verify2FAResponse.status });
+      }
+    } catch (fetchError) {
+      console.error('Error calling verify-2fa-code endpoint:', fetchError);
       return NextResponse.json({
         success: false,
-        message: verify2FAResult.message
-      } as Complete2FALoginResponse, { status: verify2FAResponse.status });
+        message: 'Failed to verify 2FA code - network error'
+      } as Complete2FALoginResponse, { status: 500 });
     }
 
     // 2FA code verified, now get user details and complete login
@@ -87,10 +97,15 @@ export async function POST(request: NextRequest) {
     } as Complete2FALoginResponse);
 
   } catch (error) {
-    console.error('Complete 2FA login error:', error);
+    console.error('Complete 2FA login error:', {
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined,
+      userUid,
+      code: code ? 'PROVIDED' : 'MISSING'
+    });
     return NextResponse.json({
       success: false,
-      message: 'Internal server error'
+      message: 'Internal server error during 2FA completion'
     } as Complete2FALoginResponse, { status: 500 });
   }
 }

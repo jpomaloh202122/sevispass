@@ -36,12 +36,22 @@ export async function POST(request: NextRequest) {
 
     console.log('Activating account for:', email, 'with code:', activationCode);
 
-    // Find the activation code
-    const verificationRecord = await db.emailVerificationCode.findValid(email, activationCode, 'activation');
+    // Find the activation code (try both 'activation' and 'registration' purposes)
+    let verificationRecord = await db.emailVerificationCode.findValid(email, activationCode, 'activation');
+    
+    // If no activation code found, try registration codes
+    if (!verificationRecord) {
+      verificationRecord = await db.emailVerificationCode.findValid(email, activationCode, 'registration');
+    }
 
     if (!verificationRecord) {
       // Check if there's any activation code for this email to provide better error messages
-      const latestCode = await db.emailVerificationCode.findLatest(email, 'activation');
+      let latestCode = await db.emailVerificationCode.findLatest(email, 'activation');
+      
+      // If no activation code, try registration codes
+      if (!latestCode) {
+        latestCode = await db.emailVerificationCode.findLatest(email, 'registration');
+      }
       
       if (!latestCode) {
         return NextResponse.json({

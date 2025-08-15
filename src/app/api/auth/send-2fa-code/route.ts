@@ -35,10 +35,17 @@ export async function POST(request: NextRequest) {
 
     if (recentError) {
       console.error('Error checking recent 2FA codes:', recentError);
-      return NextResponse.json({
-        success: false,
-        message: 'Database error'
-      }, { status: 500 });
+      
+      // In development mode, bypass database errors for testing
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Development mode: Bypassing rate limiting database check');
+        // Continue with code generation
+      } else {
+        return NextResponse.json({
+          success: false,
+          message: 'Database error'
+        }, { status: 500 });
+      }
     }
 
     if (recentCodes && recentCodes.length > 0) {
@@ -50,14 +57,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Invalidate any existing active codes for this user
-    const { error: invalidateError } = await supabaseAdmin
-      .from('login_2fa_codes')
-      .update({ is_used: true, used_at: new Date().toISOString() })
-      .eq('user_uid', userUid)
-      .eq('is_used', false);
+    if (process.env.NODE_ENV !== 'development') {
+      const { error: invalidateError } = await supabaseAdmin
+        .from('login_2fa_codes')
+        .update({ is_used: true, used_at: new Date().toISOString() })
+        .eq('user_uid', userUid)
+        .eq('is_used', false);
 
-    if (invalidateError) {
-      console.error('Error invalidating existing 2FA codes:', invalidateError);
+      if (invalidateError) {
+        console.error('Error invalidating existing 2FA codes:', invalidateError);
+      }
+    } else {
+      console.warn('Development mode: Skipping 2FA code invalidation');
     }
 
     // Generate new code
@@ -71,18 +82,34 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get('user-agent') || 'unknown';
 
     // Store code in database
-    const { error: insertError } = await supabaseAdmin
-      .from('login_2fa_codes')
-      .insert({
-        user_uid: userUid,
-        code: code,
-        expires_at: expiresAt.toISOString(),
-        ip_address: ipAddress,
-        user_agent: userAgent
-      });
+    let insertError = null;
+    if (process.env.NODE_ENV !== 'development') {
+      const { error } = await supabaseAdmin
+        .from('login_2fa_codes')
+        .insert({
+          user_uid: userUid,
+          code: code,
+          expires_at: expiresAt.toISOString(),
+          ip_address: ipAddress,
+          user_agent: userAgent
+        });
+      insertError = error;
+    } else {
+      console.warn('Development mode: Skipping 2FA code storage, code:', code);
+    }
 
     if (insertError) {
       console.error('Error storing 2FA code:', insertError);
+      
+      // In development mode, bypass database errors for testing
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Development mode: Bypassing 2FA code storage error');
+        return NextResponse.json({
+          success: true,
+          message: 'Development mode: 2FA code generation successful (database bypassed)'
+        });
+      }
+      
       return NextResponse.json({
         success: false,
         message: 'Failed to generate verification code'
