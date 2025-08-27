@@ -14,3 +14,5 @@
 # SUPABASE_ANON_KEY = your-anon-key-starting-with-eyJ
 # SUPABASE_SERVICE_ROLE_KEY = your-service-role-key-starting-with-eyJ
 # JWT_SECRET = your-secure-jwt-secret
+# RESEND_API_KEY = re_your_resend_api_key_here
+# RESEND_FROM_EMAIL = noreply@yourdomain.com

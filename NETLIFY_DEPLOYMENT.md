@@ -11,7 +11,7 @@
 
 ### Step 1: Gather Required Variables
 
-From your Supabase project dashboard (Settings → API):
+From your Supabase project dashboard (Settings → API) and Resend dashboard:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL="https://your-project-ref.supabase.co"
@@ -19,6 +19,8 @@ SUPABASE_ANON_KEY="your-anon-key-starting-with-eyJ"
 SUPABASE_SERVICE_ROLE_KEY="your-service-role-key-starting-with-eyJ"
 JWT_SECRET="your-super-secret-jwt-key-here-change-in-production"
 NODE_ENV="production"
+RESEND_API_KEY="re_your_resend_api_key_here"
+RESEND_FROM_EMAIL="noreply@yourdomain.com"
 ```
 
 ### Step 2: Configure Netlify Environment Variables
@@ -34,6 +36,8 @@ NODE_ENV="production"
 | `SUPABASE_SERVICE_ROLE_KEY` | `eyJ...` | Your Supabase service role key (keep private!) |
 | `JWT_SECRET` | `your-secret-key` | Generate a secure random string |
 | `NODE_ENV` | `production` | Set to production for deployed environment |
+| `RESEND_API_KEY` | `re_...` | Your Resend API key from resend.com dashboard |
+| `RESEND_FROM_EMAIL` | `noreply@yourdomain.com` | Verified sender email in Resend |
 
 ### Step 3: Verify Build Settings
 
