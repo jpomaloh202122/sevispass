@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.55.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
     "@types/qrcode": "^1.5.5",
     "bcryptjs": "^3.0.2",
@@ -19,6 +20,7 @@
     "dom-to-image": "^2.6.0",
     "html2canvas": "^1.4.1",
     "jimp": "^1.6.0",
+    "jsonwebtoken": "^9.0.2",
     "jspdf": "^3.0.1",
     "multer": "^2.0.2",
     "next": "15.4.6",
