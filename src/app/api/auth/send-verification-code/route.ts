@@ -68,21 +68,32 @@ export async function POST(request: NextRequest) {
     }
 
     // Save verification code to database
-    const verificationRecord = await db.emailVerificationCode.create({
-      email,
-      code: verificationCode,
-      userUid,
-      purpose,
-      expiresAt: expiresAt.toISOString(),
-      maxAttempts: 5
-    });
+    let verificationRecord;
+    try {
+      verificationRecord = await db.emailVerificationCode.create({
+        email,
+        code: verificationCode,
+        userUid,
+        purpose,
+        expiresAt: expiresAt.toISOString(),
+        maxAttempts: 5
+      });
 
-    console.log('Verification code created:', { 
-      id: verificationRecord.id, 
-      email, 
-      purpose, 
-      expiresAt: expiresAt.toISOString() 
-    });
+      console.log('Verification code created:', { 
+        id: verificationRecord.id, 
+        email, 
+        purpose, 
+        expiresAt: expiresAt.toISOString() 
+      });
+    } catch (dbError) {
+      console.error('Database error creating verification code:', dbError);
+      return NextResponse.json({
+        success: false,
+        message: 'Database error - verification code table may not exist',
+        error: dbError instanceof Error ? dbError.message : 'Database connection failed',
+        solution: 'Run email-verification-setup.sql in Supabase SQL Editor'
+      }, { status: 500 });
+    }
 
     // Send verification email
     try {
@@ -97,7 +108,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           success: false,
           message: 'Failed to send verification email',
-          error: emailResult.error
+          error: emailResult.error,
+          debug: {
+            databaseCreated: !!verificationRecord,
+            verificationRecordId: verificationRecord?.id
+          }
         }, { status: 500 });
       }
 
