@@ -24,14 +24,20 @@ export default function IdentityCard({ name, nric, profileImage, isVerified = tr
   useEffect(() => {
     const generateQRCode = async () => {
       try {
+        // Create SevisWallet-compatible QR code data with W3C VC format
         const qrData = {
-          id: uid || nric,
-          name: name,
-          nric: nric,
-          platform: 'SevisPass',
-          verified: isVerified,
-          timestamp: new Date().toISOString(),
-          url: `https://sevispass.gov.sg/verify/${uid || nric}`
+          type: "SevisPassVC",
+          version: "1.0",
+          deepLink: `seviswallet://import?type=vc&uid=${uid || nric}&name=${encodeURIComponent(name)}&nric=${encodeURIComponent(nric)}`,
+          verificationUrl: `https://sevispass.gov.sg/verify/${uid || nric}`,
+          metadata: {
+            id: uid || nric,
+            name: name,
+            nric: nric,
+            platform: 'SevisPass',
+            verified: isVerified,
+            timestamp: new Date().toISOString()
+          }
         };
         
         const qrCodeDataURL = await QRCode.toDataURL(JSON.stringify(qrData), {
@@ -64,7 +70,7 @@ export default function IdentityCard({ name, nric, profileImage, isVerified = tr
         bgcolor: 'transparent',
         cacheBust: true,
         // Don't override styles - let the original card styles show through
-        filter: (node) => {
+        filter: () => {
           // Include all elements including QR codes and text
           return true;
         }
@@ -119,6 +125,65 @@ export default function IdentityCard({ name, nric, profileImage, isVerified = tr
     } catch (error) {
       console.error(`Error downloading digital ID as ${format}:`, error);
       alert(`Failed to download digital ID as ${format.toUpperCase()}. Please try again.`);
+    }
+  };
+
+  const addToSevisWallet = async () => {
+    try {
+      const response = await fetch('/api/wallet/generate-pass', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          uid,
+          name,
+          nric,
+          type: 'seviswallet'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate SevisWallet VC');
+      }
+
+      const data = await response.json();
+      
+      // Try to open SevisWallet app with deep link
+      const deepLinkUrl = data.deepLink;
+      
+      // Create a temporary link to test if SevisWallet app is installed
+      const tempLink = document.createElement('a');
+      tempLink.href = deepLinkUrl;
+      
+      // Try to open the deep link
+      window.location.href = deepLinkUrl;
+      
+      // Fallback: If app is not installed, show QR code or download option
+      setTimeout(() => {
+        const fallbackChoice = confirm(
+          'SevisWallet app not detected. Would you like to:\n' +
+          'OK - Download the credential as a file\n' +
+          'Cancel - Show QR code to scan with SevisWallet'
+        );
+        
+        if (fallbackChoice) {
+          // Download VC as JSON file
+          const link = document.createElement('a');
+          link.href = data.downloadUrl;
+          link.download = `${name.replace(/[^a-zA-Z0-9]/g, '_')}_SevisPass_VC.json`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          // Show QR code with the VC data
+          alert('Please scan the QR code from your SevisPass identity card with the SevisWallet app to add the credential.');
+        }
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error adding to SevisWallet:', error);
+      alert('Failed to add to SevisWallet. Please try again.');
     }
   };
   return (
@@ -214,37 +279,62 @@ export default function IdentityCard({ name, nric, profileImage, isVerified = tr
     </div>
     
     {/* Action Buttons - positioned outside the card */}
-    <div className="mt-6 flex justify-center space-x-3">
-      <button
-        onClick={() => setIsViewModalOpen(true)}
-        className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-bold rounded-xl transition-all shadow-xl hover:shadow-2xl transform hover:scale-105"
-      >
-        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-        </svg>
-        View Card
-      </button>
+    <div className="mt-6 space-y-4">
+      {/* Primary Actions */}
+      <div className="flex justify-center space-x-3">
+        <button
+          onClick={() => setIsViewModalOpen(true)}
+          className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-bold rounded-xl transition-all shadow-xl hover:shadow-2xl transform hover:scale-105"
+        >
+          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          View Card
+        </button>
+        
+        <button
+          onClick={() => downloadDigitalId('png')}
+          className="inline-flex items-center px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-xl transition-all shadow-lg hover:shadow-xl"
+        >
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          PNG
+        </button>
+        
+        <button
+          onClick={() => downloadDigitalId('pdf')}
+          className="inline-flex items-center px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium rounded-xl transition-all shadow-lg hover:shadow-xl"
+        >
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          PDF
+        </button>
+      </div>
+
+      {/* Wallet Actions */}
+      <div className="flex justify-center items-center space-x-4">
+        <div className="flex items-center space-x-2">
+          <div className="h-px bg-gray-300 flex-1 w-20"></div>
+          <span className="text-sm text-gray-500 font-medium">Add to SevisWallet</span>
+          <div className="h-px bg-gray-300 flex-1 w-20"></div>
+        </div>
+      </div>
       
-      <button
-        onClick={() => downloadDigitalId('png')}
-        className="inline-flex items-center px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-xl transition-all shadow-lg hover:shadow-xl"
-      >
-        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        PNG
-      </button>
-      
-      <button
-        onClick={() => downloadDigitalId('pdf')}
-        className="inline-flex items-center px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium rounded-xl transition-all shadow-lg hover:shadow-xl"
-      >
-        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        PDF
-      </button>
+      <div className="flex justify-center">
+        <button
+          onClick={addToSevisWallet}
+          className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+        >
+          <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13Z"/>
+            <path d="M3 7h18M8 11h2M8 15h6"/>
+          </svg>
+          Add to SevisWallet
+        </button>
+      </div>
     </div>
     
     {/* View Modal */}

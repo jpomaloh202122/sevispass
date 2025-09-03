@@ -1,7 +1,8 @@
 import { Jimp } from 'jimp';
+import { awsVerificationService } from './aws-verification';
 
-// Simplified OCR service without Tesseract.js dependency
-// This provides fallback validation until OCR can be properly configured
+// Enhanced OCR service with AWS Textract integration
+// Provides both AWS Textract and fallback validation
 
 interface OCRResult {
   success: boolean;
@@ -18,13 +19,17 @@ interface DocumentValidationResult {
 }
 
 export class OCRService {
-  private isOCRAvailable = false;
+  private isAWSAvailable = false;
 
   async initializeWorker() {
-    // For now, mark OCR as unavailable due to module loading issues
-    // This will trigger fallback validation mode
-    this.isOCRAvailable = false;
-    console.log('OCR service running in fallback mode (Tesseract.js unavailable)');
+    // Check if AWS Textract is available
+    this.isAWSAvailable = awsVerificationService.isConfigured();
+    
+    if (this.isAWSAvailable) {
+      console.log('✅ OCR service initialized with AWS Textract');
+    } else {
+      console.log('⚠️ OCR service running in fallback mode (AWS credentials not configured)');
+    }
   }
 
   async preprocessImage(imageBuffer: Buffer): Promise<Buffer> {
@@ -45,16 +50,56 @@ export class OCRService {
     }
   }
 
-  async extractTextFromDocument(_imageBuffer: Buffer): Promise<OCRResult> {
+  async extractTextFromDocument(imageBuffer: Buffer): Promise<OCRResult> {
     await this.initializeWorker();
     
-    // Since OCR is currently unavailable, return failure to trigger fallback
-    return {
-      success: false,
-      extractedText: '',
-      confidence: 0,
-      error: 'OCR service temporarily unavailable - using fallback validation'
-    };
+    if (this.isAWSAvailable) {
+      try {
+        console.log('🚀 Using AWS Textract for document text extraction...');
+        
+        // Use AWS Textract for text extraction
+        const result = await awsVerificationService.extractDocumentText(imageBuffer, true);
+        
+        if (result.success) {
+          console.log('✅ AWS Textract extraction successful:', {
+            textLength: result.extractedText.length,
+            confidence: result.confidence,
+            keyValuePairs: result.keyValuePairs?.length || 0
+          });
+          
+          return {
+            success: true,
+            extractedText: result.extractedText,
+            confidence: result.confidence,
+          };
+        } else {
+          console.error('❌ AWS Textract extraction failed:', result.error);
+          return {
+            success: false,
+            extractedText: '',
+            confidence: 0,
+            error: `AWS Textract error: ${result.error}`
+          };
+        }
+      } catch (error) {
+        console.error('❌ AWS Textract service error:', error);
+        return {
+          success: false,
+          extractedText: '',
+          confidence: 0,
+          error: `AWS Textract service error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        };
+      }
+    } else {
+      // Fallback mode when AWS is not available
+      console.warn('⚠️ AWS Textract not available, using fallback mode');
+      return {
+        success: false,
+        extractedText: '',
+        confidence: 0,
+        error: 'AWS Textract unavailable - using fallback validation'
+      };
+    }
   }
 
   // Fallback validation method when OCR is unavailable
@@ -68,62 +113,93 @@ export class OCRService {
 
   async validatePassportNumber(imageBuffer: Buffer, expectedNumber: string): Promise<DocumentValidationResult> {
     try {
-      const ocrResult = await this.extractTextFromDocument(imageBuffer);
+      await this.initializeWorker();
       
-      if (!ocrResult.success) {
-        // Return fallback validation when OCR fails
-        console.warn('OCR failed for passport validation, using fallback mode');
-        return this.createFallbackValidation(expectedNumber, 'passport');
-      }
-
-      const extractedText = ocrResult.extractedText.toUpperCase();
-      const expectedUpper = expectedNumber.toUpperCase().trim();
-      
-      // Passport number patterns for different countries
-      const passportPatterns = [
-        /[A-Z]{1,2}\d{6,9}/g, // Most passport formats (e.g., A1234567, AB1234567)
-        /\d{8,9}/g, // Numeric passports
-        /[A-Z]\d{7,8}/g, // Single letter + numbers
-      ];
-
-      let foundNumbers: string[] = [];
-      
-      // Extract potential passport numbers using patterns
-      passportPatterns.forEach(pattern => {
-        const matches = extractedText.match(pattern);
-        if (matches) {
-          foundNumbers = foundNumbers.concat(matches);
+      if (this.isAWSAvailable) {
+        console.log('🚀 Using AWS Textract for passport validation...');
+        
+        // Use AWS Textract directly for document validation
+        const result = await awsVerificationService.validateDocumentNumber(imageBuffer, expectedNumber, 'passport');
+        
+        console.log('✅ AWS passport validation result:', {
+          isValid: result.isValid,
+          confidence: result.confidence,
+          matchType: result.matchType
+        });
+        
+        return result;
+      } else {
+        // Fallback to old OCR method
+        const ocrResult = await this.extractTextFromDocument(imageBuffer);
+        
+        if (!ocrResult.success) {
+          console.warn('OCR failed for passport validation, using fallback mode');
+          return this.createFallbackValidation(expectedNumber, 'passport');
         }
-      });
 
-      // Check for exact match
-      if (extractedText.includes(expectedUpper)) {
-        return {
-          isValid: true,
-          extractedNumber: expectedUpper,
-          confidence: ocrResult.confidence,
-          details: 'Exact passport number match found'
-        };
-      }
+        const extractedText = ocrResult.extractedText.toUpperCase();
+        const expectedUpper = expectedNumber.toUpperCase().trim();
+        
+        // PNG-specific passport patterns  
+        const passportPatterns = [
+          /0P\d{5,8}/gi, // Official Government Passports: 0P + 5+ numbers (e.g., 0P17985)
+          /PNG\d{6,8}/gi, // Normal Citizen Passports: PNG + 6-8 numbers
+          /0P[-\s]?\d{5,8}/gi, // 0P with separator
+          /PNG[-\s]?\d{6,8}/gi, // PNG with separator
+          /[0-9][A-Z]\d{5,8}/g, // Digit + letter + numbers (like 0P)
+          /[A-Z]{2,3}\d{5,8}/g, // 2-3 letters + numbers fallback
+        ];
 
-      // Check for partial matches or similar numbers
-      for (const foundNumber of foundNumbers) {
-        if (this.calculateSimilarity(foundNumber, expectedUpper) > 0.8) {
+        let foundNumbers: string[] = [];
+        
+        // Extract potential passport numbers using patterns
+        passportPatterns.forEach(pattern => {
+          const matches = extractedText.match(pattern);
+          if (matches) {
+            foundNumbers = foundNumbers.concat(matches);
+          }
+        });
+
+        // Clean and filter PNG passport numbers
+        foundNumbers = [...new Set(foundNumbers)]
+          .map(num => num.replace(/[-\s]/g, '').toUpperCase())
+          .filter(num => {
+            return (
+              /^0P\d{5,8}$/i.test(num) || // Official Government: 0P + 5+ digits (e.g., 0P17985)
+              /^PNG\d{6,8}$/i.test(num) || // Normal Citizen: PNG + 6-8 digits
+              /^[0-9][A-Z]\d{5,8}$/.test(num) || // Digit + letter + numbers (like 0P)
+              /^[A-Z]{2,3}\d{5,8}$/.test(num) // Generic fallback
+            );
+          });
+
+        // Check for exact match
+        if (extractedText.includes(expectedUpper)) {
           return {
             isValid: true,
-            extractedNumber: foundNumber,
-            confidence: ocrResult.confidence * 0.9,
-            details: `Similar passport number found: ${foundNumber}`
+            extractedNumber: expectedUpper,
+            confidence: ocrResult.confidence,
+            details: 'Exact passport number match found'
           };
         }
+
+        // Check for partial matches or similar numbers
+        for (const foundNumber of foundNumbers) {
+          if (this.calculateSimilarity(foundNumber, expectedUpper) > 0.8) {
+            return {
+              isValid: true,
+              extractedNumber: foundNumber,
+              confidence: ocrResult.confidence * 0.9,
+              details: `Similar passport number found: ${foundNumber}`
+            };
+          }
+        }
+
+        return {
+          isValid: false,
+          confidence: ocrResult.confidence,
+          details: `Expected passport number '${expectedNumber}' not found. Found numbers: ${foundNumbers.join(', ')}`
+        };
       }
-
-      return {
-        isValid: false,
-        confidence: ocrResult.confidence,
-        details: `Expected passport number '${expectedNumber}' not found. Found numbers: ${foundNumbers.join(', ')}`
-      };
-
     } catch (error) {
       console.error('Passport validation error:', error);
       // Return fallback validation on any error
@@ -133,67 +209,89 @@ export class OCRService {
 
   async validateNIDNumber(imageBuffer: Buffer, expectedNumber: string): Promise<DocumentValidationResult> {
     try {
-      const ocrResult = await this.extractTextFromDocument(imageBuffer);
+      await this.initializeWorker();
       
-      if (!ocrResult.success) {
-        // Return fallback validation when OCR fails
-        console.warn('OCR failed for NID validation, using fallback mode');
-        return this.createFallbackValidation(expectedNumber, 'NID');
-      }
-
-      const extractedText = ocrResult.extractedText.toUpperCase();
-      const expectedUpper = expectedNumber.toUpperCase().trim();
-      
-      // NID number patterns (adjust based on your country's format)
-      const nidPatterns = [
-        /\d{10,17}/g, // Long numeric IDs
-        /\d{4}-\d{4}-\d{4}/g, // Hyphenated format
-        /\d{3}\s\d{3}\s\d{3}/g, // Space separated
-        /[A-Z]{1,3}\d{6,12}/g, // Letter prefix + numbers
-      ];
-
-      let foundNumbers: string[] = [];
-      
-      // Extract potential NID numbers using patterns
-      nidPatterns.forEach(pattern => {
-        const matches = extractedText.match(pattern);
-        if (matches) {
-          foundNumbers = foundNumbers.concat(matches);
+      if (this.isAWSAvailable) {
+        console.log('🚀 Using AWS Textract for NID validation...');
+        
+        // Use AWS Textract directly for document validation
+        const result = await awsVerificationService.validateDocumentNumber(imageBuffer, expectedNumber, 'nid');
+        
+        console.log('✅ AWS NID validation result:', {
+          isValid: result.isValid,
+          confidence: result.confidence,
+          matchType: result.matchType
+        });
+        
+        return result;
+      } else {
+        // Fallback to old OCR method
+        const ocrResult = await this.extractTextFromDocument(imageBuffer);
+        
+        if (!ocrResult.success) {
+          console.warn('OCR failed for NID validation, using fallback mode');
+          return this.createFallbackValidation(expectedNumber, 'NID');
         }
-      });
 
-      // Clean expected number (remove spaces, hyphens)
-      const cleanExpected = expectedUpper.replace(/[-\s]/g, '');
-      
-      // Check for exact match
-      if (extractedText.includes(cleanExpected) || extractedText.includes(expectedUpper)) {
-        return {
-          isValid: true,
-          extractedNumber: expectedUpper,
-          confidence: ocrResult.confidence,
-          details: 'Exact NID number match found'
-        };
-      }
+        const extractedText = ocrResult.extractedText.toUpperCase();
+        const expectedUpper = expectedNumber.toUpperCase().trim();
+        
+        // PNG NID patterns - exactly 10 digits only
+        const nidPatterns = [
+          /\b\d{10}\b/g, // Exactly 10 digits with word boundaries
+          /\d{5}[-\s]?\d{5}/g, // 5-5 format with optional separator
+          /\d{3}[-\s]?\d{3}[-\s]?\d{4}/g, // 3-3-4 format
+          /\d{2}[-\s]?\d{3}[-\s]?\d{5}/g, // 2-3-5 format
+          /(?<!\d)\d{10}(?!\d)/g, // Negative lookbehind/ahead for exactly 10 digits
+        ];
 
-      // Check found numbers against expected (with cleaning)
-      for (const foundNumber of foundNumbers) {
-        const cleanFound = foundNumber.replace(/[-\s]/g, '');
-        if (cleanFound === cleanExpected || this.calculateSimilarity(cleanFound, cleanExpected) > 0.85) {
+        let foundNumbers: string[] = [];
+        
+        // Extract potential NID numbers using patterns
+        nidPatterns.forEach(pattern => {
+          const matches = extractedText.match(pattern);
+          if (matches) {
+            foundNumbers = foundNumbers.concat(matches);
+          }
+        });
+
+        // Clean and filter NID numbers - only exactly 10 digits
+        foundNumbers = [...new Set(foundNumbers)]
+          .map(num => num.replace(/[-\s]/g, ''))
+          .filter(num => /^\d{10}$/.test(num)); // Only exactly 10 digits
+
+        // Clean expected number (remove spaces, hyphens)
+        const cleanExpected = expectedUpper.replace(/[-\s]/g, '');
+        
+        // Check for exact match
+        if (extractedText.includes(cleanExpected) || extractedText.includes(expectedUpper)) {
           return {
             isValid: true,
-            extractedNumber: foundNumber,
-            confidence: ocrResult.confidence * 0.9,
-            details: `Similar NID number found: ${foundNumber}`
+            extractedNumber: expectedUpper,
+            confidence: ocrResult.confidence,
+            details: 'Exact NID number match found'
           };
         }
+
+        // Check found numbers against expected (with cleaning)
+        for (const foundNumber of foundNumbers) {
+          const cleanFound = foundNumber.replace(/[-\s]/g, '');
+          if (cleanFound === cleanExpected || this.calculateSimilarity(cleanFound, cleanExpected) > 0.85) {
+            return {
+              isValid: true,
+              extractedNumber: foundNumber,
+              confidence: ocrResult.confidence * 0.9,
+              details: `Similar NID number found: ${foundNumber}`
+            };
+          }
+        }
+
+        return {
+          isValid: false,
+          confidence: ocrResult.confidence,
+          details: `Expected NID number '${expectedNumber}' not found. Found numbers: ${foundNumbers.join(', ')}`
+        };
       }
-
-      return {
-        isValid: false,
-        confidence: ocrResult.confidence,
-        details: `Expected NID number '${expectedNumber}' not found. Found numbers: ${foundNumbers.join(', ')}`
-      };
-
     } catch (error) {
       console.error('NID validation error:', error);
       // Return fallback validation on any error
@@ -226,8 +324,8 @@ export class OCRService {
   }
 
   async cleanup() {
-    // No cleanup needed in fallback mode
-    console.log('OCR service cleanup completed (fallback mode)');
+    // No cleanup needed in AWS mode
+    console.log('OCR service cleanup completed');
   }
 }
 

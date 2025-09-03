@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Jimp } from 'jimp';
+import { awsVerificationService } from '@/lib/aws-verification';
 
 interface VerificationResponse {
   success: boolean;
   confidence?: number;
   message: string;
   livenessScore?: number;
+  similarity?: number;
+  qualityChecks?: {
+    sourceQuality: number;
+    targetQuality: number;
+    bothFacesDetected: boolean;
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -68,29 +75,85 @@ export async function POST(request: NextRequest) {
       } as VerificationResponse, { status: 400 });
     }
 
-    // TODO: Implement actual face verification using AI service
-    // For now, we'll simulate the verification process with lenient matching
-    const simulatedConfidence = await simulateFaceVerification(nidBuffer, faceBuffer);
+    // Check if AWS is configured
+    if (!awsVerificationService.isConfigured()) {
+      console.warn('⚠️ AWS credentials not configured, falling back to simulation mode');
+      const simulatedConfidence = await simulateFaceVerification(nidBuffer, faceBuffer);
+      const livenessScore = 0.95;
+
+      if (simulatedConfidence >= 0.8) {
+        return NextResponse.json({
+          success: true,
+          confidence: simulatedConfidence,
+          livenessScore: livenessScore,
+          message: 'Face verification successful (simulation mode - AWS not configured)'
+        } as VerificationResponse);
+      } else {
+        return NextResponse.json({
+          success: false,
+          confidence: simulatedConfidence,
+          livenessScore: livenessScore,
+          message: `Face verification failed in simulation mode - confidence too low (${simulatedConfidence.toFixed(2)})`
+        } as VerificationResponse, { status: 422 });
+      }
+    }
+
+    // Use AWS Rekognition for real face verification
+    console.log('🚀 Using AWS Rekognition for face verification...');
     
-    // Higher liveness score due to completed liveness verification
-    const livenessScore = 0.95;
+    // First, check for inappropriate content
+    const [sourceModerationResult, targetModerationResult] = await Promise.all([
+      awsVerificationService.moderateContent(nidBuffer),
+      awsVerificationService.moderateContent(faceBuffer)
+    ]);
 
-    console.log(`Face verification confidence: ${simulatedConfidence}, Liveness score: ${livenessScore}`);
+    if (!sourceModerationResult.safe || !targetModerationResult.safe) {
+      return NextResponse.json({
+        success: false,
+        confidence: 0,
+        message: 'Image content moderation failed - inappropriate content detected'
+      } as VerificationResponse, { status: 422 });
+    }
 
-    // Increased threshold for better security - requires 80% confidence
-    if (simulatedConfidence >= 0.8) {
+    // Perform AWS Rekognition face comparison with 70% threshold for better security
+    const verificationResult = await awsVerificationService.compareFaces(nidBuffer, faceBuffer, 70);
+    
+    console.log('🔍 AWS Rekognition result:', {
+      success: verificationResult.success,
+      confidence: verificationResult.confidence,
+      similarity: verificationResult.similarity,
+      facesDetected: verificationResult.facesDetected
+    });
+
+    if (!verificationResult.success) {
+      return NextResponse.json({
+        success: false,
+        confidence: 0,
+        message: verificationResult.error || 'Face verification service failed'
+      } as VerificationResponse, { status: 500 });
+    }
+
+    // Enhanced liveness score based on AWS quality checks
+    const enhancedLivenessScore = Math.min(0.98, (verificationResult.livenessScore || 0.85) + (livenessVerified ? 0.1 : 0));
+    
+    // AWS Rekognition threshold - set to 70% for balanced security and usability
+    if (verificationResult.confidence >= 70) {
       return NextResponse.json({
         success: true,
-        confidence: simulatedConfidence,
-        livenessScore: livenessScore,
-        message: 'Face verification successful with liveness confirmation'
+        confidence: verificationResult.confidence,
+        similarity: verificationResult.similarity,
+        livenessScore: enhancedLivenessScore,
+        qualityChecks: verificationResult.qualityChecks,
+        message: `Face verification successful with AWS Rekognition (${verificationResult.confidence.toFixed(1)}% confidence)`
       } as VerificationResponse);
     } else {
       return NextResponse.json({
         success: false,
-        confidence: simulatedConfidence,
-        livenessScore: livenessScore,
-        message: `Face verification failed - confidence too low (${simulatedConfidence.toFixed(2)}) despite liveness verification`
+        confidence: verificationResult.confidence,
+        similarity: verificationResult.similarity,
+        livenessScore: enhancedLivenessScore,
+        qualityChecks: verificationResult.qualityChecks,
+        message: `Face verification failed - insufficient similarity (${verificationResult.confidence.toFixed(1)}% < 70% required)`
       } as VerificationResponse, { status: 422 });
     }
 
