@@ -53,10 +53,6 @@ const CityPassAdminPage = () => {
   const [ncdcReference, setNcdcReference] = useState('');
   const [reviewing, setReviewing] = useState(false);
 
-  useEffect(() => {
-    fetchApplications();
-  }, [statusFilter, categoryFilter, fetchApplications]);
-
   const fetchApplications = useCallback(async () => {
     try {
       const params = new URLSearchParams();
@@ -84,6 +80,10 @@ const CityPassAdminPage = () => {
       setLoading(false);
     }
   }, [statusFilter, categoryFilter]);
+
+  useEffect(() => {
+    fetchApplications();
+  }, [fetchApplications]);
 
   const handleReviewApplication = async (applicationId: string) => {
     setReviewing(true);
