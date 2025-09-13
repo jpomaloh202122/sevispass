@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Jimp } from 'jimp';
+import * as Jimp from 'jimp';
 import { awsVerificationService } from '@/lib/aws-verification';
 
 interface VerificationResponse {
@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
 
     // Basic image validation
     try {
-      const nidImage = await Jimp.fromBuffer(nidBuffer);
-      const faceImage = await Jimp.fromBuffer(faceBuffer);
+      const nidImage = await Jimp.Jimp.fromBuffer(nidBuffer);
+      const faceImage = await Jimp.Jimp.fromBuffer(faceBuffer);
 
       // Ensure images are valid and reasonable size
       if (nidImage.bitmap.width < 100 || nidImage.bitmap.height < 100) {
@@ -173,8 +173,8 @@ async function simulateFaceVerification(nidBuffer: Buffer, faceBuffer: Buffer): 
   // For development/testing purposes, return a more lenient verification
   // In production, this should be replaced with actual AI face matching
   try {
-    const nidImage = await Jimp.fromBuffer(nidBuffer);
-    const faceImage = await Jimp.fromBuffer(faceBuffer);
+    const nidImage = await Jimp.Jimp.fromBuffer(nidBuffer);
+    const faceImage = await Jimp.Jimp.fromBuffer(faceBuffer);
     
     // Basic image quality checks
     const nidSize = nidImage.bitmap.width * nidImage.bitmap.height;

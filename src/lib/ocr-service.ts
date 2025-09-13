@@ -1,4 +1,4 @@
-import { Jimp } from 'jimp';
+import * as Jimp from 'jimp';
 import { awsVerificationService } from './aws-verification';
 
 // Enhanced OCR service with AWS Textract integration
@@ -34,7 +34,7 @@ export class OCRService {
 
   async preprocessImage(imageBuffer: Buffer): Promise<Buffer> {
     try {
-      const image = await Jimp.fromBuffer(imageBuffer);
+      const image = await Jimp.Jimp.fromBuffer(imageBuffer);
       
       // Image preprocessing for better OCR accuracy
       image

@@ -96,8 +96,8 @@ export async function POST(request: NextRequest) {
 
     // Basic image validation using Jimp
     try {
-      const { Jimp } = await import('jimp');
-      const faceImage = await Jimp.fromBuffer(faceBuffer);
+      const Jimp = await import('jimp');
+      const faceImage = await Jimp.Jimp.fromBuffer(faceBuffer);
 
       // Ensure image is valid and reasonable size
       if (faceImage.bitmap.width < 100 || faceImage.bitmap.height < 100) {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { awsVerificationService } from '@/lib/aws-verification';
-import { Jimp } from 'jimp';
+import * as Jimp from 'jimp';
 
 interface FaceLoginResponse {
   success: boolean;
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
       });
       
       console.log('🔄 Calling Jimp.fromBuffer...');
-      const jimpImage = await Jimp.fromBuffer(faceBufferData);
+      const jimpImage = await Jimp.Jimp.fromBuffer(faceBufferData);
       console.log('📊 Jimp image created:', {
         width: jimpImage.bitmap.width,
         height: jimpImage.bitmap.height,
@@ -228,10 +228,10 @@ export async function POST(request: NextRequest) {
         console.log('⚠️ No image headers detected, trying to process anyway...');
       }
       
-      const storedJimpImage = await Jimp.fromBuffer(storedFaceArrayBuffer);
+      const storedJimpImage = await Jimp.Jimp.fromBuffer(storedFaceArrayBuffer);
       
       // Convert to JPEG format for AWS Rekognition compatibility
-      storedFaceBuffer = await storedJimpImage.quality(90).getBufferAsync(Jimp.MIME_JPEG);
+      storedFaceBuffer = await storedJimpImage.quality(90).getBufferAsync(Jimp.Jimp.MIME_JPEG);
       
       console.log('✅ Stored face photo processed successfully:', {
         storedSize: storedFaceBuffer.length,
