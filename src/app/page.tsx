@@ -1,223 +1,80 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/Header';
+import HeroSlider from '@/components/HeroSlider';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-100">
+    <div className="min-h-screen bg-gradient-to-br from-sevis-light via-white to-sevis-primary/5 relative overflow-hidden">
+      {/* Technological Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-32 h-32 border-2 border-sevis-primary/20 rounded-full animate-pulse"></div>
+        <div className="absolute top-40 right-20 w-24 h-24 border border-sevis-secondary/30 rotate-45 animate-spin" style={{animationDuration: '20s'}}></div>
+        <div className="absolute bottom-20 left-20 w-20 h-20 bg-sevis-primary/10 rounded-lg animate-bounce" style={{animationDuration: '3s'}}></div>
+        <div className="absolute bottom-40 right-10 w-28 h-28 border-2 border-sevis-primary/15 rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
+        
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,_theme(colors.sevis.primary/0.1)_1px,_transparent_0)] bg-[size:20px_20px]"></div>
+      </div>
       <Header />
+      <div className="h-[10px]"></div>
+      <HeroSlider />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-16">
-          <div className="mx-auto mb-8">
-            <Image
-              src="/newlogo.png"
-              alt="SevisPass Logo"
-              width={96}
-              height={96}
-              className="h-24 w-24 mx-auto"
-            />
-          </div>
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Welcome to <span className="text-amber-600">SevisPass</span>
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Your comprehensive digital identity platform powered by <strong>Single Sign-On</strong>, 
-            <strong>Authentication Verification</strong>, and <strong>Consent Management</strong>. 
-            One secure identity, unlimited possibilities.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
-              href="/auth/login"
-              className="bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-white px-8 py-4 rounded-lg text-lg font-medium transition-all shadow-lg hover:shadow-xl"
-            >
-              Sign In with SevisPass
-            </Link>
-            <Link 
-              href="/auth/register"
-              className="border-2 border-amber-500 text-amber-600 hover:bg-gradient-to-r hover:from-yellow-400 hover:to-amber-500 hover:text-white px-8 py-4 rounded-lg text-lg font-medium transition-all"
-            >
-              Create Account
-            </Link>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          <div className="bg-white rounded-lg p-8 shadow-sm text-center hover:shadow-md transition-shadow">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 relative z-10">
+          <div className="group bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg text-center hover:shadow-2xl hover:shadow-sevis-primary/10 transition-all duration-500 transform hover:-translate-y-2 border border-sevis-primary/10 hover:border-sevis-primary/30 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-sevis-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="relative w-20 h-20 bg-gradient-to-br from-sevis-primary/20 to-sevis-secondary/20 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-500">
+              <div className="absolute inset-0 bg-sevis-primary/10 rounded-2xl transform rotate-6 group-hover:rotate-12 transition-transform duration-500"></div>
+              <svg className="w-10 h-10 text-sevis-primary relative z-10 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m0 0a2 2 0 012 2 2 2 0 01-2 2 2 2 0 01-2-2m0-4V5a2 2 0 00-2-2H9a2 2 0 00-2 2v.01M15 11v6h4a2 2 0 002-2V9a2 2 0 00-2-2h-4z" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">Single Sign-On</h3>
-            <p className="text-gray-600">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4 relative z-10 group-hover:text-sevis-primary transition-colors duration-300">
+              Single Sign-On
+              <div className="w-12 h-0.5 bg-gradient-to-r from-sevis-primary to-sevis-secondary mx-auto mt-2 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+            </h3>
+            <p className="text-gray-600 relative z-10 group-hover:text-gray-700 transition-colors duration-300">
               Access multiple government and private services with just one secure login. 
               Eliminate password fatigue and streamline your digital experience.
             </p>
           </div>
           
-          <div className="bg-white rounded-lg p-8 shadow-sm text-center hover:shadow-md transition-shadow">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="group bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg text-center hover:shadow-2xl hover:shadow-sevis-secondary/10 transition-all duration-500 transform hover:-translate-y-2 border border-sevis-secondary/10 hover:border-sevis-secondary/30 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-sevis-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="relative w-20 h-20 bg-gradient-to-br from-sevis-secondary/20 to-sevis-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-500">
+              <div className="absolute inset-0 bg-sevis-secondary/10 rounded-2xl transform -rotate-6 group-hover:-rotate-12 transition-transform duration-500"></div>
+              <svg className="w-10 h-10 text-sevis-secondary relative z-10 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">Authentication Verification</h3>
-            <p className="text-gray-600">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4 relative z-10 group-hover:text-sevis-secondary transition-colors duration-300">
+              Authentication Verification
+              <div className="w-12 h-0.5 bg-gradient-to-r from-sevis-secondary to-sevis-primary mx-auto mt-2 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+            </h3>
+            <p className="text-gray-600 relative z-10 group-hover:text-gray-700 transition-colors duration-300">
               Advanced biometric and document verification ensuring your identity is authentic and secure. 
               Multi-layered protection for ultimate peace of mind.
             </p>
           </div>
           
-          <div className="bg-white rounded-lg p-8 shadow-sm text-center hover:shadow-md transition-shadow">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="group bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg text-center hover:shadow-2xl hover:shadow-sevis-primary/10 transition-all duration-500 transform hover:-translate-y-2 border border-sevis-primary/10 hover:border-sevis-primary/30 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-sevis-primary/3 to-sevis-secondary/3 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="relative w-20 h-20 bg-gradient-to-br from-sevis-primary/30 to-sevis-secondary/20 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-500">
+              <div className="absolute inset-0 bg-sevis-primary/15 rounded-2xl transform rotate-12 group-hover:rotate-[20deg] transition-transform duration-500"></div>
+              <svg className="w-10 h-10 text-sevis-dark relative z-10 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">Consent Management</h3>
-            <p className="text-gray-600">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4 relative z-10 group-hover:text-sevis-primary transition-colors duration-300">
+              Consent Management
+              <div className="w-12 h-0.5 bg-gradient-to-r from-sevis-primary to-sevis-secondary mx-auto mt-2 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+            </h3>
+            <p className="text-gray-600 relative z-10 group-hover:text-gray-700 transition-colors duration-300">
               Complete control over your personal data sharing. Granular permissions allow you to decide 
               exactly what information services can access and when.
             </p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg p-8 shadow-sm">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Integrated Services</h2>
-          <p className="text-gray-600 mb-8 text-center max-w-3xl mx-auto">
-            SevisPass connects you to essential government services across three key categories, 
-            streamlining your interactions with public institutions.
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* G2C - Government to Citizen */}
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6">
-              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-3 text-center">G2C Services</h3>
-              <p className="text-sm text-gray-600 mb-4 text-center">Government to Citizen</p>
-              
-              <div className="space-y-2">
-                <div className="flex items-center space-x-3 p-2 bg-white rounded-lg">
-                  <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">CPF Board</span>
-                </div>
-                <div className="flex items-center space-x-3 p-2 bg-white rounded-lg">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">HDB Services</span>
-                </div>
-                <div className="flex items-center space-x-3 p-2 bg-white rounded-lg">
-                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">MOH Services</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* G2G - Government to Government */}
-            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6">
-              <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-3 text-center">G2G Services</h3>
-              <p className="text-sm text-gray-600 mb-4 text-center">Government to Government</p>
-              
-              <div className="space-y-2">
-                <div className="flex items-center space-x-3 p-2 bg-white rounded-lg">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">Inter-Ministry Data</span>
-                </div>
-                <div className="flex items-center space-x-3 p-2 bg-white rounded-lg">
-                  <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">Agency Integration</span>
-                </div>
-                <div className="flex items-center space-x-3 p-2 bg-white rounded-lg">
-                  <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">Shared Services</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* G2B - Government to Business */}
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6">
-              <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-3 text-center">G2B Services</h3>
-              <p className="text-sm text-gray-600 mb-4 text-center">Government to Business & Others</p>
-              
-              <div className="space-y-2">
-                <div className="flex items-center space-x-3 p-2 bg-white rounded-lg">
-                  <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">IRAS Business</span>
-                </div>
-                <div className="flex items-center space-x-3 p-2 bg-white rounded-lg">
-                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">ACRA Services</span>
-                </div>
-                <div className="flex items-center space-x-3 p-2 bg-white rounded-lg">
-                  <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">Enterprise SG</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="text-center mt-8">
-            <p className="text-gray-600 mb-4">Experience seamless digital government services across all sectors</p>
-            <a 
-              href="/services"
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-xl"
-            >
-              Explore All Services
-              <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </a>
           </div>
         </div>
         

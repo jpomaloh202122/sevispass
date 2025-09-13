@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
@@ -90,7 +89,7 @@ async function deleteAllUsers() {
   // Reset sequences if needed
   try {
     await supabaseAdmin.rpc('reset_user_sequences');
-  } catch (seqError) {
+  } catch (_seqError) {
     console.log('Sequence reset not available or failed (non-critical)');
   }
 
@@ -220,7 +219,7 @@ async function countUsers() {
 }
 
 // GET endpoint to check user counts without deleting
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const result = await countUsers();
     

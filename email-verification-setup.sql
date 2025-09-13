@@ -40,7 +40,8 @@ BEGIN
   GET DIAGNOSTICS deleted_count = ROW_COUNT;
   RETURN deleted_count;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path = public;
 
 -- Add email_verified column to users table if it doesn't exist
 DO $$ 
@@ -73,9 +74,10 @@ RETURNS VARCHAR(6) AS $$
 BEGIN
   RETURN LPAD(FLOOR(RANDOM() * 1000000)::TEXT, 6, '0');
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path = public;
 
--- Verification stats view (optional - for admin monitoring)
+-- Verification stats view (for admin monitoring only)
 CREATE OR REPLACE VIEW verification_stats AS
 SELECT 
   purpose,
@@ -87,8 +89,24 @@ SELECT
 FROM email_verification_codes
 GROUP BY purpose;
 
--- Grant permissions for the verification stats view
-ALTER VIEW verification_stats OWNER TO postgres;
+-- Create admin role if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'verification_admin') THEN
+        CREATE ROLE verification_admin NOLOGIN;
+    END IF;
+END
+$$;
+
+-- Grant limited permissions to admin role
+GRANT SELECT ON email_verification_codes TO verification_admin;
+
+-- Set view owner to admin role (removes SECURITY DEFINER risk)
+ALTER VIEW verification_stats OWNER TO verification_admin;
+
+-- Only allow administrators to access the view
+REVOKE ALL ON verification_stats FROM PUBLIC;
+GRANT SELECT ON verification_stats TO verification_admin;
 
 -- Test the setup
 SELECT 'Email verification system setup completed successfully!' as status;

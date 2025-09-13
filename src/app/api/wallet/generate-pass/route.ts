@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   } catch (error) {
-    console.error('Error generating wallet pass:', error);
+    // Wallet pass generation error
     return NextResponse.json(
       { error: 'Failed to generate wallet pass' },
       { status: 500 }
@@ -83,7 +83,7 @@ async function generateSevisWalletVC(uid: string, name: string, nric: string) {
       downloadUrl: `data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(verifiableCredential))}`
     });
   } catch (error) {
-    console.error('Error generating SevisWallet VC:', error);
+    // SevisWallet VC generation error
     throw error;
   }
 }

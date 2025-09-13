@@ -1,0 +1,35 @@
+{
+  "id": "PSC-1757733007990-fid6q1861",
+  "userId": "mf68grvw-5740734e685dbced",
+  "applicationId": "PSI1757688753748S3NGY8",
+  "type": "public_servant_id",
+  "name": "Joshua Pomaloh",
+  "holderName": "Joshua Pomaloh",
+  "cardNumber": "PS13264948",
+  "issuer": "Department of Personnel Management",
+  "employeeNumber": "13264948",
+  "workEmail": "joshua.pomaloh@ict.gov.pg",
+  "department": "Department of Information Communication Technology",
+  "address": "PO Box 786 Vision City\r\nVision City",
+  "dateOfBirth": "1978-11-17",
+  "gender": "male",
+  "issueDate": "2025-09-13",
+  "expiryDate": "2030-09-12",
+  "colors": {
+    "primary": "#1E40AF",
+    "secondary": "#3B82F6",
+    "background": "#1E293B",
+    "text": "#FFFFFF"
+  },
+  "isVerified": true,
+  "status": "active",
+  "metadata": {
+    "addedVia": "admin_approval",
+    "approvedBy": "DPM SuperAdmin",
+    "approvedAt": "2025-09-13T03:10:07.989Z",
+    "applicationId": "PSI1757688753748S3NGY8",
+    "cardType": "government_id"
+  },
+  "createdAt": "2025-09-13T03:10:07.990Z",
+  "updatedAt": "2025-09-13T03:10:07.990Z"
+}

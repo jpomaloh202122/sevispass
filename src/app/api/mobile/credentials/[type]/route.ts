@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
-import { db } from '@/lib/db';
+import { withMobileAuth, AuthenticatedUser } from '@/lib/mobile-auth';
 
 interface CredentialDetailResponse {
   success: boolean;
@@ -9,45 +8,12 @@ interface CredentialDetailResponse {
   message: string;
 }
 
-function verifyMobileToken(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key';
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
-    
-    if (decoded.type !== 'mobile') {
-      return null;
-    }
-    
-    return decoded;
-  } catch (error) {
-    console.error('Token verification error:', error);
-    return null;
-  }
-}
-
-export async function GET(
+async function getCredentialDetail(
   request: NextRequest,
+  user: AuthenticatedUser,
   { params }: { params: { type: string } }
 ) {
   try {
-    // Verify mobile token
-    const tokenData = verifyMobileToken(request);
-    
-    if (!tokenData) {
-      return NextResponse.json({
-        success: false,
-        message: 'Unauthorized - Invalid or missing token'
-      } as CredentialDetailResponse, { status: 401 });
-    }
-
     const credentialType = params.type;
 
     // Validate credential type
@@ -56,29 +22,6 @@ export async function GET(
         success: false,
         message: 'Invalid credential type. Supported types: sevispass, citypass, publicservantid'
       } as CredentialDetailResponse, { status: 400 });
-    }
-
-    // Find user by uid from token
-    let user;
-    try {
-      user = await db.user.findUnique({
-        where: {
-          uid: tokenData.uid
-        }
-      });
-    } catch (dbError) {
-      console.error('Database query error:', dbError);
-      return NextResponse.json({
-        success: false,
-        message: 'Database connection error'
-      } as CredentialDetailResponse, { status: 503 });
-    }
-
-    if (!user) {
-      return NextResponse.json({
-        success: false,
-        message: 'User not found'
-      } as CredentialDetailResponse, { status: 404 });
     }
 
     let credential;
@@ -132,6 +75,8 @@ export async function GET(
     });
   }
 }
+
+export const GET = withMobileAuth(getCredentialDetail);
 
 async function generateSevisPassCredential(user: any) {
   const verifiableCredential = {

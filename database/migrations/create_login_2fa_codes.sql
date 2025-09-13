@@ -125,7 +125,8 @@ BEGIN
     
     RETURN deleted_count;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public;
 
 -- Drop and recreate get_active_2fa_code function
 DROP FUNCTION IF EXISTS get_active_2fa_code(VARCHAR(255), VARCHAR(6)) CASCADE;
@@ -157,7 +158,8 @@ BEGIN
     ORDER BY l.created_at DESC
     LIMIT 1;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public;
 
 -- Grant execute permissions on functions
 GRANT EXECUTE ON FUNCTION cleanup_expired_2fa_codes() TO service_role;

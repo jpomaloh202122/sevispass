@@ -115,8 +115,8 @@ export async function POST(request: NextRequest) {
       } as VerificationResponse, { status: 422 });
     }
 
-    // Perform AWS Rekognition face comparison with 70% threshold for better security
-    const verificationResult = await awsVerificationService.compareFaces(nidBuffer, faceBuffer, 70);
+    // Perform AWS Rekognition face comparison with 50% threshold for maximum accessibility
+    const verificationResult = await awsVerificationService.compareFaces(nidBuffer, faceBuffer, 50);
     
     console.log('🔍 AWS Rekognition result:', {
       success: verificationResult.success,
@@ -136,8 +136,8 @@ export async function POST(request: NextRequest) {
     // Enhanced liveness score based on AWS quality checks
     const enhancedLivenessScore = Math.min(0.98, (verificationResult.livenessScore || 0.85) + (livenessVerified ? 0.1 : 0));
     
-    // AWS Rekognition threshold - set to 70% for balanced security and usability
-    if (verificationResult.confidence >= 70) {
+    // AWS Rekognition threshold - increased to 80% for better security
+    if (verificationResult.confidence >= 80) {
       return NextResponse.json({
         success: true,
         confidence: verificationResult.confidence,
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
         similarity: verificationResult.similarity,
         livenessScore: enhancedLivenessScore,
         qualityChecks: verificationResult.qualityChecks,
-        message: `Face verification failed - insufficient similarity (${verificationResult.confidence.toFixed(1)}% < 70% required)`
+        message: `Face verification failed - insufficient similarity (${verificationResult.confidence.toFixed(1)}% < 50% required)`
       } as VerificationResponse, { status: 422 });
     }
 

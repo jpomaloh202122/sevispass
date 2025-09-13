@@ -1,0 +1,22 @@
+@echo off
+REM Batch script to set AWS environment variables for SevisPass
+REM Run this script before starting your development server
+
+echo Setting AWS environment variables for SevisPass...
+
+set AWS_ACCESS_KEY_ID=ASIAZQ3DQVY4ESFYJ4PX
+set AWS_SECRET_ACCESS_KEY=QFkWm76or1LW2FuPJ05mAhntG3z9+FueZMklTHwj
+set AWS_SESSION_TOKEN=IQoJb3JpZ2luX2VjEGUaDmFwLXNvdXRoZWFzdC0yIkcwRQIgCa04z0l/3R5O8oPF7qTJeCqr9fkiP7g59i505MSaxk0CIQCKTJLzi8cqaJl1ISHGMvhKS/+VVw/E+q85N18WywCwdCqZAwjO//////////8BEAAaDDY1NDY1NDM1Mjk1MiIMVCh4a2UkGCRuOYPPKu0C1fYSB7slgoxBXM4lQ9J/U4pOQmSjjXQqtbTcgZmDu7j7dOCwx5yTGwG+gQzurdp/ShBI8t4FpRjMie2gjqKYXo4lJzGOvFWeMQNa6XPZufYU6nMaOAxnPYTxSq77VUTYwjaDZZplesTBuch20h693/Ii9U4yc7o84KIvk8pICTqVIg958e8aDix9+8uOPl9WpYnUgq1dniSY+LF30MnSmB9T4x+2b/agPQUwrPrXntKbeOr3NlBzUAqX+6dbykg5aVQxXfmrN7i9ej4xmm+7QyurlV1llNhaQ0HHhnU91Df4PiyG3CJ4stlswnKH4xewXiDd3kmLreKtqLWFdQXj+xQr02+tg7KD6pZu0oEOPW/+pBbc9G1r/+SEFjFfZfiZN70SipbCV9uuwQx8kGk8w37PUY3uscvzf6phFR0M19RThBvDjRE6UjEcrFyUCRTVZ2H6gqbfUuxFp4+GImjj/iQAbu3pw00FbgNSa68wjNn+xQY6pgHIHVKvCV+t/9QCWDJ9dTfY6deHGc6zkXDQBHwwgvX9s/V3WG2rjAMAG/h07AdfgFAIVE7tik1wBX5/5H38XmZgNQ1TDxFkSj3xYfNOlvIORxQ+IzPA4wJTjm3R427oZezIEeO6P9VfTTck2kWnG2myRFg1w1My2lbkDDZKpb5Jy+stBaupR2F1W4BeHgFTuEr3GQBv7e1M2a8DC/XhQ5ieR/o6mH2Q
+set AWS_REGION=ap-southeast-2
+
+echo AWS environment variables set successfully!
+echo AWS_ACCESS_KEY_ID: %AWS_ACCESS_KEY_ID%
+echo AWS_REGION: %AWS_REGION%
+echo AWS_SESSION_TOKEN: [SET]
+
+echo.
+echo You can now start your development server with: npm run dev
+echo Note: These are temporary session credentials and will expire.
+
+pause
+

@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { checkDebugAccess } from '@/lib/debug-middleware';
 
 export async function GET() {
+  // Security check - only allow in development
+  const securityCheck = checkDebugAccess();
+  if (securityCheck) return securityCheck;
+
   const results = [];
 
   try {

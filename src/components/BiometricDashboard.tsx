@@ -19,6 +19,7 @@ interface UserAppointment {
   status: string;
   location: BiometricLocation;
   createdAt: string;
+  notes?: string;
 }
 
 interface BiometricDashboardProps {
@@ -120,7 +121,11 @@ export default function BiometricDashboard({ userUid, userName }: BiometricDashb
     return `${hour12}:${minutes} ${ampm}`;
   };
 
-  const getAppointmentStatus = (status: string) => {
+  const getAppointmentStatus = (status: string, notes?: string) => {
+    if (status === 'cancelled' && notes?.includes('Automatically cancelled')) {
+      return { color: 'text-orange-600', bg: 'bg-orange-50', text: 'Auto-Cancelled' };
+    }
+    
     switch (status) {
       case 'scheduled':
         return { color: 'text-blue-600', bg: 'bg-blue-50', text: 'Scheduled' };
@@ -128,6 +133,8 @@ export default function BiometricDashboard({ userUid, userName }: BiometricDashb
         return { color: 'text-green-600', bg: 'bg-green-50', text: 'Completed' };
       case 'cancelled':
         return { color: 'text-red-600', bg: 'bg-red-50', text: 'Cancelled' };
+      case 'no_show':
+        return { color: 'text-gray-600', bg: 'bg-gray-50', text: 'No Show' };
       default:
         return { color: 'text-gray-600', bg: 'bg-gray-50', text: 'Unknown' };
     }
@@ -219,8 +226,8 @@ export default function BiometricDashboard({ userUid, userName }: BiometricDashb
                 <p className="text-xs text-blue-700">Your biometric collection is scheduled</p>
               </div>
             </div>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getAppointmentStatus(appointment.status).bg} ${getAppointmentStatus(appointment.status).color}`}>
-              {getAppointmentStatus(appointment.status).text}
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getAppointmentStatus(appointment.status, appointment.notes).bg} ${getAppointmentStatus(appointment.status, appointment.notes).color}`}>
+              {getAppointmentStatus(appointment.status, appointment.notes).text}
             </span>
           </div>
 
@@ -332,7 +339,27 @@ export default function BiometricDashboard({ userUid, userName }: BiometricDashb
             </div>
           )}
 
-          {appointment.status === 'cancelled' && (
+          {appointment.status === 'cancelled' && appointment.notes?.includes('Automatically cancelled') && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div className="flex items-start">
+                <svg className="w-5 h-5 text-orange-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <div className="text-sm text-orange-800">
+                  <p className="font-medium">This appointment was automatically cancelled.</p>
+                  <p className="mt-1">The scheduled date and time has passed. Please schedule a new appointment to complete your biometric collection.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowScheduling(true)}
+                className="mt-4 w-full py-3 px-4 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-xl"
+              >
+                Schedule New Appointment
+              </button>
+            </div>
+          )}
+
+          {appointment.status === 'cancelled' && !appointment.notes?.includes('Automatically cancelled') && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-start">
                 <svg className="w-5 h-5 text-red-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">

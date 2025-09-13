@@ -1,23 +1,13 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-export interface User {
-  uid: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  nid: string;
-  phoneNumber: string;
-  address?: string;
-  isVerified?: boolean;
-  createdAt?: string;
-}
+import { User } from '@/types/user';
 
 interface AuthContextType {
   user: User | null;
+  token: string | null;
   isLoading: boolean;
-  login: (user: User) => void;
+  login: (user: User, token?: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
   updateUser: (userData: Partial<User>) => void;
@@ -35,31 +25,43 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load user from localStorage on mount
+  // Load user and token from localStorage on mount
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem('sevispass_user');
+      const storedToken = localStorage.getItem('authToken');
       if (storedUser) {
         const userData = JSON.parse(storedUser);
         setUser(userData);
       }
+      if (storedToken) {
+        setToken(storedToken);
+      }
     } catch (error) {
       console.error('Failed to load user from localStorage:', error);
       localStorage.removeItem('sevispass_user');
+      localStorage.removeItem('authToken');
     }
     setIsLoading(false);
   }, []);
 
-  const login = (userData: User) => {
+  const login = (userData: User, authToken?: string) => {
     setUser(userData);
     localStorage.setItem('sevispass_user', JSON.stringify(userData));
+    if (authToken) {
+      setToken(authToken);
+      localStorage.setItem('authToken', authToken);
+    }
   };
 
   const logout = () => {
     setUser(null);
+    setToken(null);
     localStorage.removeItem('sevispass_user');
+    localStorage.removeItem('authToken');
   };
 
   const updateUser = (userData: Partial<User>) => {
@@ -72,6 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const value = {
     user,
+    token,
     isLoading,
     login,
     logout,

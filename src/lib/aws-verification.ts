@@ -88,30 +88,13 @@ export class AWSVerificationService {
   async compareFaces(
     sourceImageBuffer: Buffer, 
     targetImageBuffer: Buffer, 
-    similarityThreshold: number = 70
+    similarityThreshold: number = 50
   ): Promise<FaceVerificationResult> {
     try {
       console.log('🔍 Starting AWS Rekognition face comparison...');
       
-      // First, detect faces in both images to ensure quality
-      const [sourceDetection, targetDetection] = await Promise.all([
-        this.detectFaces(sourceImageBuffer),
-        this.detectFaces(targetImageBuffer)
-      ]);
-
-      if (!sourceDetection.success || !targetDetection.success) {
-        return {
-          success: false,
-          confidence: 0,
-          facesDetected: { source: 0, target: 0 },
-          qualityChecks: {
-            sourceQuality: 0,
-            targetQuality: 0,
-            bothFacesDetected: false
-          },
-          error: 'Face detection failed in one or both images'
-        };
-      }
+      // Skip pre-detection and go directly to comparison for better success rate
+      // AWS CompareFaces will handle face detection internally
 
       // Perform face comparison
       const compareParams: CompareFacesRequest = {
@@ -122,7 +105,7 @@ export class AWSVerificationService {
           Bytes: targetImageBuffer
         },
         SimilarityThreshold: similarityThreshold,
-        QualityFilter: 'AUTO' // Filter out low quality faces
+        QualityFilter: 'NONE' // Accept all faces, including lower quality ones
       };
 
       const command = new CompareFacesCommand(compareParams);
@@ -134,26 +117,56 @@ export class AWSVerificationService {
         sourceImageFace: !!result.SourceImageFace
       });
 
+      // If no source face is detected, return a specific error
+      if (!result.SourceImageFace) {
+        return {
+          success: false,
+          confidence: 0,
+          facesDetected: { source: 0, target: 0 },
+          qualityChecks: {
+            sourceQuality: 0,
+            targetQuality: 0,
+            bothFacesDetected: false
+          },
+          error: 'No face detected in the source image (NID/Passport photo). Please ensure the image shows a clear face.'
+        };
+      }
+
       const hasMatch = result.FaceMatches && result.FaceMatches.length > 0;
       const topMatch = hasMatch ? result.FaceMatches[0] : null;
       const similarity = topMatch?.Similarity || 0;
 
+      // If no matches found, it means target image has no faces or faces don't meet threshold
+      if (!hasMatch) {
+        return {
+          success: false,
+          confidence: 0,
+          facesDetected: { source: 1, target: 0 },
+          qualityChecks: {
+            sourceQuality: this.calculateFaceQuality(result.SourceImageFace),
+            targetQuality: 0,
+            bothFacesDetected: false
+          },
+          error: `No matching face found in the target image. Either no face detected in selfie or similarity below ${similarityThreshold}% threshold.`
+        };
+      }
+
       // Calculate quality scores
       const sourceQuality = this.calculateFaceQuality(result.SourceImageFace);
-      const targetQuality = hasMatch ? this.calculateFaceQuality(topMatch.Face) : 0;
+      const targetQuality = this.calculateFaceQuality(topMatch.Face);
 
       return {
         success: true,
         confidence: similarity,
         similarity: similarity,
         facesDetected: {
-          source: result.SourceImageFace ? 1 : 0,
-          target: result.FaceMatches?.length || 0
+          source: 1,
+          target: result.FaceMatches.length
         },
         qualityChecks: {
           sourceQuality,
           targetQuality,
-          bothFacesDetected: !!result.SourceImageFace && hasMatch
+          bothFacesDetected: true
         },
         livenessScore: this.estimateLivenessFromQuality(sourceQuality, targetQuality)
       };

@@ -28,7 +28,7 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-black shadow-sm border-b border-gray-800">
+    <header className="bg-gradient-to-r from-black to-yellow-500 shadow-lg sticky top-0 z-50">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20">
           <div className="flex items-center">
@@ -40,14 +40,23 @@ export default function Header() {
                 height={40}
                 className="h-10 w-10"
               />
-              <span className="text-2xl font-bold text-white">SevisPass</span>
+              <span className="text-2xl font-bold text-white hover:text-gray-200 transition-colors duration-300">
+                SevisPass
+                <span className="text-xs text-white/80 font-normal block leading-none">Digital Identity</span>
+              </span>
             </Link>
           </div>
 
           <div className="hidden md:flex md:items-center md:space-x-8">
-            <Link href="/services" className="text-gray-300 hover:text-amber-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+            <Link href="/services" className="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-bold">
               Services
             </Link>
+            
+            {isAuthenticated && (
+              <Link href="/wallet" className="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-bold">
+                My Wallet
+              </Link>
+            )}
             <div className="flex items-center space-x-4">
               {isAuthenticated && user ? (
                 <>
@@ -55,7 +64,7 @@ export default function Header() {
                     <img
                       src={`/api/profile/image/${user.uid}`}
                       alt="Profile"
-                      className="w-8 h-8 rounded-full object-cover border-2 border-amber-400"
+                      className="w-8 h-8 rounded-full object-cover border-2 border-sevis-primary"
                       onError={(e) => {
                         // Fallback to initials if image fails to load
                         const target = e.target as HTMLImageElement;
@@ -63,11 +72,11 @@ export default function Header() {
                         target.nextElementSibling?.classList.remove('hidden');
                       }}
                     />
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center text-white text-sm font-bold hidden">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sevis-primary to-sevis-secondary flex items-center justify-center text-white text-sm font-bold hidden">
                       {`${user.firstName[0]}${user.lastName[0]}`}
                     </div>
                     <div className="relative group">
-                      <button className="flex items-center space-x-2 text-sm text-gray-300 hover:text-white transition-colors">
+                      <button className="flex items-center space-x-2 text-sm text-white hover:text-gray-200 px-3 py-2 rounded-md font-bold">
                         <span>Welcome, {user.firstName}</span>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -75,19 +84,22 @@ export default function Header() {
                       </button>
                       
                       {/* Dropdown Menu */}
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-200">
-                        <Link href="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
-                          📊 Dashboard
+                      <div className="absolute right-0 mt-2 w-52 bg-white rounded-md shadow-lg py-2 z-50 opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-300">
+                        <Link href="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                          Dashboard
                         </Link>
-                        <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
-                          👤 Profile
+                        <Link href="/wallet" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                          My Wallet
+                        </Link>
+                        <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                          Profile
                         </Link>
                       </div>
                     </div>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="text-amber-400 hover:text-amber-300 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    className="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-bold"
                   >
                     Sign Out
                   </button>
@@ -96,13 +108,13 @@ export default function Header() {
                 <>
                   <Link 
                     href="/auth/login"
-                    className="text-amber-400 hover:text-amber-300 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    className="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-bold"
                   >
                     Sign In
                   </Link>
                   <Link 
                     href="/auth/register"
-                    className="bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-white px-5 py-2.5 rounded-md text-sm font-medium transition-all"
+                    className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded-md text-sm font-bold"
                   >
                     Sign Up
                   </Link>
@@ -114,7 +126,7 @@ export default function Header() {
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-300 hover:text-amber-400 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-500"
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
             >
               <svg className="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                 {isMobileMenuOpen ? (
@@ -128,12 +140,12 @@ export default function Header() {
         </div>
 
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-black">
+          <div className="md:hidden bg-white border-t border-gray-200">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              <Link href="/services" className="text-gray-300 hover:text-amber-400 block px-3 py-2 rounded-md text-base font-medium">
+              <Link href="/services" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium">
                 Services
               </Link>
-              <div className="pt-4 pb-3 border-t border-gray-700">
+              <div className="pt-4 pb-3 border-t border-gray-200">
                 <div className="space-y-3">
                   {isAuthenticated && user ? (
                     <>
@@ -141,44 +153,47 @@ export default function Header() {
                         <img
                           src={`/api/profile/image/${user.uid}`}
                           alt="Profile"
-                          className="w-8 h-8 rounded-full object-cover border-2 border-amber-400"
+                          className="w-8 h-8 rounded-full object-cover"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';
                             target.nextElementSibling?.classList.remove('hidden');
                           }}
                         />
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center text-white text-sm font-bold hidden">
+                        <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-bold hidden">
                           {`${user.firstName[0]}${user.lastName[0]}`}
                         </div>
-                        <span className="text-sm text-gray-300">
+                        <span className="text-sm text-gray-700 font-medium">
                           Welcome, {user.firstName}
                         </span>
                       </div>
-                      <Link href="/dashboard" className="text-gray-300 hover:text-amber-400 block px-3 py-2 rounded-md text-base font-medium">
-                        📊 Dashboard
+                      <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium">
+                        Dashboard
                       </Link>
-                      <Link href="/profile" className="text-gray-300 hover:text-amber-400 block px-3 py-2 rounded-md text-base font-medium">
-                        👤 Profile
+                      <Link href="/wallet" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium">
+                        My Wallet
+                      </Link>
+                      <Link href="/profile" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium">
+                        Profile
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="text-amber-400 hover:text-amber-300 block px-3 py-2 rounded-md text-base font-medium text-left w-full"
+                        className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium text-left w-full"
                       >
-                        🚪 Sign Out
+                        Sign Out
                       </button>
                     </>
                   ) : (
                     <>
                       <Link 
                         href="/auth/login"
-                        className="text-amber-400 hover:text-amber-300 block px-3 py-2 rounded-md text-base font-medium"
+                        className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
                       >
                         Sign In
                       </Link>
                       <Link 
                         href="/auth/register"
-                        className="bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-white px-5 py-2.5 rounded-md text-base font-medium inline-block"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-base font-medium inline-block"
                       >
                         Sign Up
                       </Link>

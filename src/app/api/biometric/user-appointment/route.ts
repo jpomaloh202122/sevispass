@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
+function isAppointmentLapsed(appointmentDate: string, appointmentTime: string): boolean {
+  const currentDateTime = new Date();
+  
+  // Parse the appointment date and time
+  const [year, month, day] = appointmentDate.split('-').map(Number);
+  const [hours, minutes] = appointmentTime.split(':').map(Number);
+  
+  // Create appointment datetime object
+  const appointmentDateTime = new Date(year, month - 1, day, hours, minutes);
+  
+  // Return true if current time is past the appointment time
+  return currentDateTime > appointmentDateTime;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { userUid } = await request.json();
@@ -12,13 +26,45 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Only look for scheduled appointments for dashboard purposes
-    const appointment = await db.biometricAppointment.findMany({
+    // First, find all scheduled appointments for this user
+    const scheduledAppointments = await db.biometricAppointment.findMany({
       where: {
         user_uid: userUid,
         status: 'scheduled'
       }
     });
+
+    // Check each scheduled appointment to see if it has lapsed
+    for (const appointment of scheduledAppointments) {
+      if (isAppointmentLapsed(appointment.appointment_date, appointment.appointment_time)) {
+        // Auto-cancel the lapsed appointment
+        await db.biometricAppointment.update({
+          where: { id: appointment.id },
+          data: { 
+            status: 'cancelled',
+            notes: 'Automatically cancelled - appointment time has passed',
+            updated_at: new Date()
+          }
+        });
+      }
+    }
+
+    // Now look for the most recent appointment (scheduled, cancelled, or completed)
+    const appointments = await db.biometricAppointment.findMany({
+      where: {
+        user_uid: userUid,
+        status: {
+          in: ['scheduled', 'cancelled', 'completed', 'no_show']
+        }
+      }
+    });
+
+    // Sort appointments by created_at in descending order and take the first one
+    const sortedAppointments = appointments.sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    
+    const appointment = sortedAppointments.length > 0 ? [sortedAppointments[0]] : [];
 
     const userAppointment = appointment.length > 0 ? appointment[0] : null;
 
@@ -49,6 +95,7 @@ export async function POST(request: NextRequest) {
         appointmentDate: userAppointment.appointment_date,
         appointmentTime: userAppointment.appointment_time,
         status: userAppointment.status,
+        notes: userAppointment.notes,
         location: locationData ? {
           name: locationData.name,
           address: locationData.address,
@@ -62,9 +109,14 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error fetching user biometric appointment:', error);
+    console.error('Error details:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    });
     return NextResponse.json({
       success: false,
-      message: 'Failed to fetch appointment information'
+      message: `Failed to fetch appointment information: ${error instanceof Error ? error.message : 'Unknown error'}`
     }, { status: 500 });
   }
 }

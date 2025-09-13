@@ -1,0 +1,48 @@
+{
+  "id": "PSI1757688753748S3NGY8",
+  "userId": "mf68grvw-5740734e685dbced",
+  "category": "government_employee",
+  "firstName": "Joshua",
+  "lastName": "Pomaloh",
+  "dateOfBirth": "1978-11-17",
+  "gender": "male",
+  "email": "pomalohjoshua@gmail.com",
+  "phone": "+67570933944",
+  "address": "PO Box 786 Vision City\r\nVision City",
+  "nationality": "Papua New Guinea",
+  "identificationNumber": "0P17985",
+  "identificationType": "passport",
+  "supportingDocuments": {
+    "nidDocument": "C:\\Users\\pomal\\sevispassv1\\sevispass\\uploads\\public-servant-id\\PSI-1757688753738-kw8cpkdev\\National_ID.jpeg",
+    "policeClearance": "C:\\Users\\pomal\\sevispassv1\\sevispass\\uploads\\public-servant-id\\PSI-1757688753738-kw8cpkdev\\Police_Clearance_Certificate.pdf",
+    "medicalCertificate": "C:\\Users\\pomal\\sevispassv1\\sevispass\\uploads\\public-servant-id\\PSI-1757688753738-kw8cpkdev\\Medical_Certificate.pdf"
+  },
+  "employmentDetails": {
+    "department": "Department of Information Communication Technology",
+    "position": "Executive Manager",
+    "employeeId": "13264948",
+    "governmentEmail": "joshua.pomaloh@ict.gov.pg",
+    "startDate": "2021-03-18",
+    "contractType": "permanent"
+  },
+  "status": "approved",
+  "validityPeriod": 12,
+  "applicationDate": "2025-09-12T14:52:33.748Z",
+  "adminNotes": "",
+  "reviewedBy": "DPM SuperAdmin",
+  "reviewedAt": "2025-09-13T03:10:07.989Z",
+  "updatedAt": "2025-09-13T03:10:07.989Z",
+  "isOverride": false,
+  "adminRole": "dpm_superadmin",
+  "reviewHistory": [
+    {
+      "decision": "approved",
+      "notes": "",
+      "reviewedBy": "DPM SuperAdmin",
+      "reviewedAt": "2025-09-13T03:10:07.989Z",
+      "adminRole": "dpm_superadmin",
+      "isOverride": false,
+      "previousStatus": "pending"
+    }
+  ]
+}

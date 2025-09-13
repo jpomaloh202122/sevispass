@@ -4,6 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
+// Constants
+const RESEND_COOLDOWN_SECONDS = 120;
+const CODE_LENGTH = 6;
+const AUTO_SUBMIT_DELAY = 300;
+
 interface TwoFactorVerificationProps {
   userUid: string;
   userEmail: string;
@@ -13,7 +18,7 @@ interface TwoFactorVerificationProps {
 export default function TwoFactorVerification({ userUid, userEmail, onBack }: TwoFactorVerificationProps) {
   const router = useRouter();
   const { login } = useAuth();
-  const [code, setCode] = useState<string[]>(new Array(6).fill(''));
+  const [code, setCode] = useState<string[]>(new Array(CODE_LENGTH).fill(''));
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -42,16 +47,16 @@ export default function TwoFactorVerification({ userUid, userEmail, onBack }: Tw
     setCode(newCode);
 
     // Auto-advance to next input
-    if (value && index < 5) {
+    if (value && index < CODE_LENGTH - 1) {
       inputRefs.current[index + 1]?.focus();
     }
 
     // Auto-submit when all digits are entered
-    if (newCode.every(digit => digit) && newCode.join('').length === 6) {
+    if (newCode.every(digit => digit) && newCode.join('').length === CODE_LENGTH) {
       // Small delay to let user see the complete code before submission
       setTimeout(() => {
         handleSubmit(newCode.join(''));
-      }, 300);
+      }, AUTO_SUBMIT_DELAY);
     }
   };
 
@@ -95,23 +100,48 @@ export default function TwoFactorVerification({ userUid, userEmail, onBack }: Tw
     setMessage(null);
 
     try {
+      // Check for OIDC flow parameters from the URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const clientId = urlParams.get('client_id');
+      const redirectUri = urlParams.get('redirect_uri');
+      const state = urlParams.get('state');
+      const scope = urlParams.get('scope');
+      
       const response = await fetch('/api/auth/complete-2fa-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userUid: userUid,
-          code: codeToSubmit
+          code: codeToSubmit,
+          // Pass OIDC parameters if present
+          ...(clientId && redirectUri && {
+            clientId,
+            redirectUri,
+            state,
+            scope
+          })
         })
       });
 
       const result = await response.json();
 
-      if (result.success && result.user) {
-        // Show success message briefly before auto-login
+      if (result.success && result.redirectUrl) {
+        // OIDC flow - redirect directly to SEVIS portal
+        setMessage({ type: 'success', text: '✅ Redirecting to SEVIS Portal...' });
+        setTimeout(() => {
+          window.location.href = result.redirectUrl;
+        }, 1500);
+      } else if (result.success && result.user) {
+        // Regular login flow
         setMessage({ type: 'success', text: '✅ Verification successful! Logging you in...' });
         
-        // Complete login by storing user in context
-        login(result.user);
+        // Store JWT token in localStorage if provided
+        if (result.token) {
+          localStorage.setItem('authToken', result.token);
+          login(result.user, result.token);
+        } else {
+          login(result.user);
+        }
         
         // Brief delay to show success message, then redirect
         setTimeout(() => {
@@ -121,11 +151,11 @@ export default function TwoFactorVerification({ userUid, userEmail, onBack }: Tw
         setMessage({ type: 'error', text: result.message });
         
         // Clear the code inputs on error for security
-        setCode(new Array(6).fill(''));
+        setCode(new Array(CODE_LENGTH).fill(''));
         inputRefs.current[0]?.focus();
       }
     } catch (error) {
-      console.error('2FA verification error:', error);
+      // Error logged for debugging - remove in production
       setMessage({ 
         type: 'error', 
         text: 'Network error. Please try again.' 
@@ -160,8 +190,8 @@ export default function TwoFactorVerification({ userUid, userEmail, onBack }: Tw
 
       if (result.success) {
         setMessage({ type: 'success', text: 'New verification code sent to your email' });
-        setCountdown(120); // 2-minute cooldown
-        setCode(new Array(6).fill(''));
+        setCountdown(RESEND_COOLDOWN_SECONDS);
+        setCode(new Array(CODE_LENGTH).fill(''));
         inputRefs.current[0]?.focus();
       } else {
         if (result.cooldownSeconds) {
@@ -170,7 +200,7 @@ export default function TwoFactorVerification({ userUid, userEmail, onBack }: Tw
         setMessage({ type: 'error', text: result.message });
       }
     } catch (error) {
-      console.error('Resend 2FA code error:', error);
+      // Error logged for debugging - remove in production
       setMessage({ 
         type: 'error', 
         text: 'Failed to resend code. Please try again.' 

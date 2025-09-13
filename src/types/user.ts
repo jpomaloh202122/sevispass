@@ -6,6 +6,7 @@ export interface User {
   nid: string; // NID or Passport Number
   phoneNumber: string;
   address?: string;
+  facePhoto?: string; // Base64 encoded face photo for facial recognition
   isVerified?: boolean;
   createdAt: Date;
   updatedAt: Date;

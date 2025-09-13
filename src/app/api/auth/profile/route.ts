@@ -21,9 +21,72 @@ interface ProfileResponse {
     nid: string;
     phoneNumber: string;
     address?: string;
+    facePhoto?: string;
+    isVerified?: boolean;
     createdAt: string;
   };
   message: string;
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const uid = searchParams.get('uid');
+
+    if (!uid) {
+      return NextResponse.json({
+        success: false,
+        message: 'User UID is required'
+      } as ProfileResponse, { status: 400 });
+    }
+
+    // Get user from database
+    let user;
+    try {
+      user = await db.user.findUnique({
+        where: { uid }
+      });
+    } catch (dbError) {
+      console.error('Database query error:', dbError);
+      return NextResponse.json({
+        success: false,
+        message: 'Database connection error'
+      } as ProfileResponse, { status: 503 });
+    }
+
+    if (!user) {
+      return NextResponse.json({
+        success: false,
+        message: 'User not found'
+      } as ProfileResponse, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      user: {
+        uid: user.uid,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        nid: user.nid,
+        phoneNumber: user.phoneNumber,
+        address: user.address,
+        facePhoto: user.profileImagePath, // Use profileImagePath as facePhoto
+        isVerified: user.isVerified,
+        createdAt: typeof user.createdAt === 'string' 
+          ? user.createdAt 
+          : user.createdAt.toISOString()
+      },
+      message: 'Profile retrieved successfully'
+    } as ProfileResponse);
+
+  } catch (error) {
+    console.error('Get profile error:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Internal server error'
+    } as ProfileResponse, { status: 500 });
+  }
 }
 
 export async function PUT(request: NextRequest) {
@@ -158,7 +221,11 @@ export async function PUT(request: NextRequest) {
         nid: updatedUser.nid,
         phoneNumber: updatedUser.phoneNumber,
         address: updatedUser.address,
-        createdAt: updatedUser.createdAt.toISOString()
+        facePhoto: updatedUser.profileImagePath, // Use profileImagePath as facePhoto
+        isVerified: updatedUser.isVerified,
+        createdAt: typeof updatedUser.createdAt === 'string' 
+          ? updatedUser.createdAt 
+          : updatedUser.createdAt.toISOString()
       },
       message: 'Profile updated successfully'
     } as ProfileResponse);

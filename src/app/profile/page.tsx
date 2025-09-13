@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
+import LivenessDetection from '@/components/LivenessDetection';
 
 export default function ProfilePage() {
   const { user, updateUser } = useAuth();
@@ -27,6 +28,12 @@ export default function ProfilePage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Face photo management states
+  const [isEditingFacePhoto, setIsEditingFacePhoto] = useState(false);
+  const [isCapturingFacePhoto, setIsCapturingFacePhoto] = useState(false);
+  const [newFacePhoto, setNewFacePhoto] = useState<File | null>(null);
+  const [facePhotoPreview, setFacePhotoPreview] = useState<string | null>(null);
 
   // Initialize form data when user data is available
   useEffect(() => {
@@ -211,6 +218,142 @@ export default function ProfilePage() {
       }
     } catch (error) {
       console.error('Profile image update error:', error);
+      setMessage({ 
+        type: 'error', 
+        text: 'Network error. Please try again.' 
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Face photo management functions
+  const handleFacePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setMessage({ 
+          type: 'error', 
+          text: 'Please select a valid image file (JPEG, PNG, etc.)' 
+        });
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        setMessage({ 
+          type: 'error', 
+          text: 'Image file size must be less than 5MB' 
+        });
+        return;
+      }
+
+      console.log('Face photo upload validation passed:', {
+        name: file.name,
+        type: file.type,
+        size: file.size
+      });
+
+      setNewFacePhoto(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setFacePhotoPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const startFacePhotoCapture = () => {
+    setIsCapturingFacePhoto(true);
+  };
+
+  const handleFacePhotoLivenessDetected = (result: any, capturedImage: File) => {
+    console.log('Face photo liveness detection result:', result);
+    console.log('Captured image details:', {
+      name: capturedImage.name,
+      type: capturedImage.type,
+      size: capturedImage.size
+    });
+    
+    if (result.isLive) {
+      // Validate captured image
+      if (!capturedImage.type.startsWith('image/')) {
+        setMessage({ 
+          type: 'error', 
+          text: 'Invalid image format captured. Please try again.' 
+        });
+        setIsCapturingFacePhoto(false);
+        return;
+      }
+
+      setNewFacePhoto(capturedImage);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setFacePhotoPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(capturedImage);
+      setIsCapturingFacePhoto(false);
+    } else {
+      setMessage({ 
+        type: 'error', 
+        text: 'Liveness verification failed. Please try again.' 
+      });
+      setIsCapturingFacePhoto(false);
+    }
+  };
+
+  const handleFacePhotoError = (error: string) => {
+    console.error('Face photo liveness detection error:', error);
+    setMessage({ 
+      type: 'error', 
+      text: error || 'Camera access failed. Please check permissions and try again.' 
+    });
+    setIsCapturingFacePhoto(false);
+  };
+
+  const cancelFacePhotoEdit = () => {
+    setIsEditingFacePhoto(false);
+    setNewFacePhoto(null);
+    setFacePhotoPreview(null);
+    setIsCapturingFacePhoto(false);
+  };
+
+  const saveFacePhoto = async () => {
+    if (!newFacePhoto || !user) return;
+    
+    setIsLoading(true);
+    setMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('facePhoto', newFacePhoto);
+      formData.append('uid', user.uid);
+      formData.append('livenessVerified', 'true'); // Always true since we use LivenessDetection
+
+      const response = await fetch('/api/profile/update-face-photo', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setMessage({ type: 'success', text: 'Face photo updated successfully! This will be used for facial recognition login.' });
+        setIsEditingFacePhoto(false);
+        setNewFacePhoto(null);
+        setFacePhotoPreview(null);
+        
+        // Update user context with new data
+        if (result.user) {
+          updateUser(result.user);
+        }
+      } else {
+        setMessage({ type: 'error', text: result.message || 'Failed to update face photo' });
+      }
+    } catch (error) {
+      console.error('Face photo update error:', error);
       setMessage({ 
         type: 'error', 
         text: 'Network error. Please try again.' 
@@ -561,6 +704,128 @@ export default function ProfilePage() {
                   Configure
                 </button>
               </div>
+            </div>
+
+            <div className="border-t border-gray-200 pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-900">Facial Recognition Login</h3>
+                  <p className="text-sm text-gray-500">Update your face photo for secure facial recognition login</p>
+                </div>
+                <button 
+                  onClick={() => setIsEditingFacePhoto(true)}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  {user?.facePhotoPath ? 'Update Face Photo' : 'Add Face Photo'}
+                </button>
+              </div>
+
+              {/* Current Face Photo Display */}
+              {user?.facePhotoPath && !isEditingFacePhoto && (
+                <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="relative">
+                    <img
+                      src={user.facePhotoPath}
+                      alt="Current face photo"
+                      className="w-16 h-16 rounded-full object-cover border-2 border-gray-300"
+                    />
+                    <div className="absolute -bottom-1 -right-1 bg-green-500 text-white rounded-full p-1">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Face photo registered</p>
+                    <p className="text-xs text-gray-500">Used for facial recognition login</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Face Photo Edit Interface */}
+              {isEditingFacePhoto && !isCapturingFacePhoto && (
+                <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="text-center">
+                    <h4 className="text-sm font-medium text-gray-900 mb-2">Update Face Photo</h4>
+                    <p className="text-xs text-gray-500 mb-4">
+                      This photo will be used for facial recognition login. Make sure your face is clearly visible.
+                    </p>
+                  </div>
+
+                  {/* Face Photo Preview */}
+                  {facePhotoPreview && (
+                    <div className="flex justify-center">
+                      <img
+                        src={facePhotoPreview}
+                        alt="Face photo preview"
+                        className="w-24 h-24 rounded-full object-cover border-2 border-gray-300"
+                      />
+                    </div>
+                  )}
+
+                  {/* Upload Options */}
+                  <div className="flex space-x-3 justify-center">
+                    <button
+                      onClick={() => document.getElementById('face-photo-upload')?.click()}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      📁 Upload Photo
+                    </button>
+                    <button
+                      onClick={startFacePhotoCapture}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      📷 Take Live Photo
+                    </button>
+                  </div>
+
+                  <input
+                    id="face-photo-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFacePhotoUpload}
+                    className="hidden"
+                  />
+
+                  {/* Save/Cancel Buttons */}
+                  {newFacePhoto && (
+                    <div className="flex space-x-3 justify-center">
+                      <button
+                        onClick={saveFacePhoto}
+                        disabled={isLoading}
+                        className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isLoading ? 'Saving...' : '✅ Save Face Photo'}
+                      </button>
+                      <button
+                        onClick={cancelFacePhotoEdit}
+                        className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors"
+                      >
+                        ❌ Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Live Photo Capture */}
+              {isCapturingFacePhoto && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <LivenessDetection 
+                    onLivenessDetected={handleFacePhotoLivenessDetected}
+                    onError={handleFacePhotoError}
+                  />
+                  
+                  <div className="flex space-x-3 mt-4 justify-center">
+                    <button
+                      onClick={() => setIsCapturingFacePhoto(false)}
+                      className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -1,0 +1,4 @@
+// Credentials module main export
+export * from './types';
+export * from './services/credential.service';
+export * from './services/certificate.service';

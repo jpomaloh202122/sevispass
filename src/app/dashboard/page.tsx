@@ -7,11 +7,33 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import BiometricDashboard from '@/components/BiometricDashboard';
 import WalletQRScanner from '@/components/WalletQRScanner';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showBiometricModal, setShowBiometricModal] = useState(false);
+
+  // Load user profile data including face photo
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (user?.uid && !user.facePhoto) {
+        try {
+          const response = await fetch(`/api/auth/profile?uid=${user.uid}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.user) {
+              updateUser(data.user);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load user profile:', error);
+        }
+      }
+    };
+
+    loadUserProfile();
+  }, [user?.uid, user?.facePhoto, updateUser]);
 
   const handleQRScan = (data: string) => {
     try {
@@ -60,7 +82,7 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-sevis-light to-sevis-primary/5">
         <Header />
         
         <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -76,6 +98,7 @@ export default function DashboardPage() {
             <IdentityCard
               name={`${user?.firstName} ${user?.lastName}`}
               nric={user?.nid || ''}
+              profileImage={user?.facePhoto}
               uid={user?.uid}
               isVerified={true}
             />
@@ -84,10 +107,10 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
             <div className="space-y-3">
-              <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-amber-300 hover:bg-amber-50 transition-colors">
+              <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-sevis-primary hover:bg-sevis-primary/10 transition-colors">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-8 h-8 bg-sevis-primary/20 rounded-full flex items-center justify-center">
+                    <svg className="w-4 h-4 text-sevis-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
@@ -100,11 +123,11 @@ export default function DashboardPage() {
               
               <button 
                 onClick={() => setShowQRScanner(true)}
-                className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-amber-300 hover:bg-amber-50 transition-colors"
+                className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-sevis-primary hover:bg-sevis-primary/10 transition-colors"
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-8 h-8 bg-sevis-primary/20 rounded-full flex items-center justify-center">
+                    <svg className="w-4 h-4 text-sevis-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                     </svg>
                   </div>
@@ -115,10 +138,10 @@ export default function DashboardPage() {
                 </div>
               </button>
               
-              <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-amber-300 hover:bg-amber-50 transition-colors">
+              <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-sevis-primary hover:bg-sevis-primary/10 transition-colors">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-8 h-8 bg-sevis-primary/20 rounded-full flex items-center justify-center">
+                    <svg className="w-4 h-4 text-sevis-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
@@ -126,10 +149,13 @@ export default function DashboardPage() {
                 </div>
               </button>
               
-              <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-amber-300 hover:bg-amber-50 transition-colors">
+              <button 
+                onClick={() => setShowBiometricModal(true)}
+                className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-sevis-primary hover:bg-sevis-primary/10 transition-colors"
+              >
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-8 h-8 bg-sevis-primary/20 rounded-full flex items-center justify-center">
+                    <svg className="w-4 h-4 text-sevis-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a2 2 0 012-2h4a2 2 0 012 2v2h4a2 2 0 012 2v2a2 2 0 01-2 2h-1l-.764 10.074A2 2 0 0118.263 21H5.737a2 2 0 01-1.973-1.926L3 9H2a2 2 0 01-1-1V6a2 2 0 012-2h4z" />
                     </svg>
                   </div>
@@ -140,10 +166,10 @@ export default function DashboardPage() {
                 </div>
               </button>
               
-              <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-amber-300 hover:bg-amber-50 transition-colors">
+              <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-sevis-primary hover:bg-sevis-primary/10 transition-colors">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-8 h-8 bg-sevis-primary/20 rounded-full flex items-center justify-center">
+                    <svg className="w-4 h-4 text-sevis-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
@@ -154,240 +180,144 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Biometric Appointment Section */}
-        <div className="mb-8">
-          <BiometricDashboard 
-            userUid={user?.uid || ''} 
-            userName={`${user?.firstName} ${user?.lastName}`} 
-          />
-        </div>
 
-        {/* Verifiable Credentials Section */}
-        <div className="mb-8">
+
+
+        {/* My Applications Section */}
+        <div className="bg-white rounded-lg p-6 shadow-sm mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Verifiable Credentials</h2>
-            <button className="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-xl">
-              + Add Credential
+            <h2 className="text-xl font-bold text-gray-900">My Applications</h2>
+            <button className="px-4 py-2 bg-gradient-to-r from-sevis-primary to-sevis-secondary hover:from-sevis-primary/90 hover:to-sevis-secondary/90 text-white font-medium rounded-lg transition-all shadow-md hover:shadow-lg">
+              + New Application
             </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {/* Education Credentials */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
+          <div className="space-y-4">
+            {/* City Pass Application */}
+            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900">City Pass Application</h4>
+                  <p className="text-xs text-gray-500">Senior Citizen Pass - Transportation</p>
+                  <p className="text-xs text-gray-400">Submitted: Dec 15, 2024</p>
+                </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Education</h3>
-              <p className="text-sm text-gray-600 mb-4 text-center">Certificates & Transcripts</p>
-              
-              <div className="space-y-2">
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-700">Bachelor's Degree</span>
-                    <span className="text-xs text-green-600">✓ Verified</span>
-                  </div>
-                </div>
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-700">Transcript</span>
-                    <span className="text-xs text-green-600">✓ Verified</span>
-                  </div>
-                </div>
-                <button className="w-full p-2 text-xs text-blue-600 hover:text-blue-700 border border-dashed border-blue-300 rounded-lg hover:bg-blue-50 transition-colors">
-                  + Add Education Credential
+              <div className="flex items-center space-x-3">
+                <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                  Under Review
+                </span>
+                <button className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
               </div>
             </div>
-            
-            {/* Civil Registry Credentials */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+
+            {/* Voter Pass Application */}
+            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900">Voter Pass Application</h4>
+                  <p className="text-xs text-gray-500">Digital Voting Credential</p>
+                  <p className="text-xs text-gray-400">Approved: Dec 10, 2024</p>
+                </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Civil Registry</h3>
-              <p className="text-sm text-gray-600 mb-4 text-center">Birth Certificates & Records</p>
-              
-              <div className="space-y-2">
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-700">Birth Certificate</span>
-                    <span className="text-xs text-green-600">✓ Verified</span>
-                  </div>
-                </div>
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-700">Marriage Certificate</span>
-                    <span className="text-xs text-amber-600">⏳ Pending</span>
-                  </div>
-                </div>
-                <button className="w-full p-2 text-xs text-green-600 hover:text-green-700 border border-dashed border-green-300 rounded-lg hover:bg-green-50 transition-colors">
-                  + Add Civil Registry Credential
+              <div className="flex items-center space-x-3">
+                <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  Approved
+                </span>
+                <button className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
               </div>
             </div>
-            
-            {/* Transport Credentials */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1h1m0-3v3m0 0h8.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V19a1 1 0 01-1 1h-2M7 7h3m-3 4h3m-3 4h3" />
-                </svg>
+
+            {/* Town Pass Application */}
+            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900">Town Pass Application</h4>
+                  <p className="text-xs text-gray-500">Community Services Access</p>
+                  <p className="text-xs text-gray-400">Submitted: Dec 8, 2024</p>
+                </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Transport</h3>
-              <p className="text-sm text-gray-600 mb-4 text-center">Driver's License & Permits</p>
-              
-              <div className="space-y-2">
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-700">Driver's License</span>
-                    <span className="text-xs text-green-600">✓ Verified</span>
-                  </div>
-                </div>
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-700">Motorcycle License</span>
-                    <span className="text-xs text-gray-500">Not Added</span>
-                  </div>
-                </div>
-                <button className="w-full p-2 text-xs text-purple-600 hover:text-purple-700 border border-dashed border-purple-300 rounded-lg hover:bg-purple-50 transition-colors">
-                  + Add Transport Credential
+              <div className="flex items-center space-x-3">
+                <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                  Documents Required
+                </span>
+                <button className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
               </div>
             </div>
-            
-            {/* Immigration & Citizen Credentials */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+
+            {/* Education Pass Application */}
+            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow opacity-60">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900">Education Pass Application</h4>
+                  <p className="text-xs text-gray-500">Academic Credentials Verification</p>
+                  <p className="text-xs text-gray-400">Draft saved</p>
+                </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Immigration</h3>
-              <p className="text-sm text-gray-600 mb-4 text-center">Passports & Citizenship</p>
-              
-              <div className="space-y-2">
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-700">Passport</span>
-                    <span className="text-xs text-green-600">✓ Verified</span>
-                  </div>
-                </div>
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-700">Citizenship Certificate</span>
-                    <span className="text-xs text-green-600">✓ Verified</span>
-                  </div>
-                </div>
-                <button className="w-full p-2 text-xs text-red-600 hover:text-red-700 border border-dashed border-red-300 rounded-lg hover:bg-red-50 transition-colors">
-                  + Add Immigration Credential
+              <div className="flex items-center space-x-3">
+                <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                  Draft
+                </span>
+                <button className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
               </div>
             </div>
           </div>
-          
-          {/* Credential Statistics */}
-          <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Credential Overview</h3>
+
+          {/* Application Statistics */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">4</div>
-                <div className="text-sm text-gray-600">Education</div>
+                <div className="text-lg font-bold text-blue-600">1</div>
+                <div className="text-xs text-gray-600">Under Review</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">2</div>
-                <div className="text-sm text-gray-600">Civil Registry</div>
+                <div className="text-lg font-bold text-green-600">1</div>
+                <div className="text-xs text-gray-600">Approved</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">1</div>
-                <div className="text-sm text-gray-600">Transport</div>
+                <div className="text-lg font-bold text-red-600">1</div>
+                <div className="text-xs text-gray-600">Action Required</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">2</div>
-                <div className="text-sm text-gray-600">Immigration</div>
+                <div className="text-lg font-bold text-gray-600">1</div>
+                <div className="text-xs text-gray-600">Drafts</div>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Available Services</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <ServiceCard
-              title="CPF Services"
-              description="Check your CPF balance, contribution history, and manage your retirement planning"
-              href="/services/cpf"
-              status="active"
-              icon={
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              }
-            />
-            
-            <ServiceCard
-              title="Income Tax"
-              description="File your income tax returns and check your tax assessment online"
-              href="/services/tax"
-              status="active"
-              icon={
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-              }
-            />
-            
-            <ServiceCard
-              title="Healthcare Records"
-              description="Access your medical records and health screening reports"
-              href="/services/health"
-              status="active"
-              icon={
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-              }
-            />
-            
-            <ServiceCard
-              title="Housing & Development"
-              description="Apply for HDB flat, check application status and manage property matters"
-              href="/services/housing"
-              status="active"
-              icon={
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-              }
-            />
-            
-            <ServiceCard
-              title="Business Registration"
-              description="Register new business, update business information and manage licenses"
-              href="/services/business"
-              status="pending"
-              icon={
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              }
-            />
-            
-            <ServiceCard
-              title="Education Services"
-              description="Check academic records, apply for financial assistance and course registration"
-              href="/services/education"
-              status="inactive"
-              icon={
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              }
-            />
           </div>
         </div>
 
@@ -395,8 +325,8 @@ export default function DashboardPage() {
           <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Activities</h2>
           <div className="space-y-4">
             <div className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
-              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-sevis-primary/20 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-sevis-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
@@ -408,8 +338,8 @@ export default function DashboardPage() {
             </div>
             
             <div className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
-              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-sevis-primary/20 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-sevis-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
@@ -421,8 +351,8 @@ export default function DashboardPage() {
             </div>
             
             <div className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
-              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-sevis-primary/20 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-sevis-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
@@ -443,6 +373,34 @@ export default function DashboardPage() {
           onScan={handleQRScan}
           onClose={() => setShowQRScanner(false)}
         />
+      )}
+
+      {/* Biometric Appointment Modal */}
+      {showBiometricModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+          <div className="relative bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-xl font-semibold text-gray-900">Biometric Appointment</h3>
+              <button
+                onClick={() => setShowBiometricModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Modal Content */}
+            <div className="p-6">
+              <BiometricDashboard 
+                userUid={user?.uid || ''} 
+                userName={`${user?.firstName} ${user?.lastName}`} 
+              />
+            </div>
+          </div>
+        </div>
       )}
     </ProtectedRoute>
   );

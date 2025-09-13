@@ -1,0 +1,130 @@
+{
+  "name": "SevisPass - Digital Identity Platform",
+  "short_name": "SevisPass",
+  "description": "Government of Papua New Guinea Digital Identity Platform for secure access to services and facilities",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait-primary",
+  "categories": ["government", "utilities", "finance"],
+  "lang": "en",
+  "dir": "ltr",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "My Digital Wallet",
+      "short_name": "Wallet",
+      "description": "Access your digital identity cards and passes",
+      "url": "/wallet",
+      "icons": [
+        {
+          "src": "/icons/wallet-shortcut.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your account dashboard and services",
+      "url": "/dashboard",
+      "icons": [
+        {
+          "src": "/icons/dashboard-shortcut.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Services",
+      "short_name": "Services",
+      "description": "Access government services",
+      "url": "/services",
+      "icons": [
+        {
+          "src": "/icons/services-shortcut.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-dashboard.png",
+      "type": "image/png",
+      "sizes": "1280x720",
+      "form_factor": "wide",
+      "label": "SevisPass Dashboard"
+    },
+    {
+      "src": "/screenshots/mobile-wallet.png",
+      "type": "image/png", 
+      "sizes": "375x812",
+      "form_factor": "narrow",
+      "label": "Digital Wallet"
+    }
+  ],
+  "features": [
+    "offline-access",
+    "biometric-authentication",
+    "digital-wallet",
+    "government-services"
+  ],
+  "protocols": [
+    {
+      "protocol": "web+sevispass",
+      "url": "/handle?url=%s"
+    }
+  ]
+}

@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     try {
       body = await request.json();
     } catch (parseError) {
-      console.error('JSON parsing error:', parseError);
+      // Invalid JSON in request body
       return NextResponse.json({
         success: false,
         message: 'Invalid request format'
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
         }
       });
     } catch (dbError) {
-      console.error('Database query error:', dbError);
+      // Database query error
       return NextResponse.json({
         success: false,
         message: 'Database connection error'
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     try {
       isValidPassword = await verifyPassword(body.password, user.password);
     } catch (verifyError) {
-      console.error('Password verification error:', verifyError);
+      // Password verification error
       return NextResponse.json({
         success: false,
         message: 'Authentication error'
@@ -101,11 +101,11 @@ export async function POST(request: NextRequest) {
       } as LoginResponse, { status: 401 });
     }
 
-    console.log('Password verified for user:', { uid: user.uid, email: user.email });
+    // Password verified successfully
 
     // Send 2FA code instead of completing login
     try {
-      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002';
       const send2FAPayload = {
         userUid: user.uid,
         email: user.email,
@@ -121,11 +121,11 @@ export async function POST(request: NextRequest) {
       const send2FAResult = await send2FAResponse.json();
 
       if (!send2FAResult.success) {
-        console.error('Failed to send 2FA code:', send2FAResult.message);
+        // Failed to send 2FA code
         
         // In development, if email service fails, allow bypass for testing
         if (process.env.NODE_ENV === 'development') {
-          console.warn('Development mode: Bypassing 2FA email failure');
+          // Development mode: Bypassing 2FA email failure
           return NextResponse.json({
             success: true,
             requires2FA: true,
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
         } as LoginResponse, { status: 500 });
       }
 
-      console.log('2FA code sent successfully for login:', user.email);
+      // 2FA code sent successfully
 
       return NextResponse.json({
         success: true,
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
       } as LoginResponse);
 
     } catch (send2FAError) {
-      console.error('Error sending 2FA code:', send2FAError);
+      // Error sending 2FA code
       return NextResponse.json({
         success: false,
         message: 'Failed to send verification code. Please try again.'
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('Login error:', error);
+    // Login error occurred
     
     // Ensure we always return a valid JSON response
     return new NextResponse(JSON.stringify({
