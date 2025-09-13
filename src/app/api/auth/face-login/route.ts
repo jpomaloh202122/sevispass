@@ -107,7 +107,6 @@ export async function POST(request: NextRequest) {
       console.log('🔄 Starting image processing...');
       console.log('🔍 Jimp object check:', {
         JimpType: typeof Jimp,
-        JimpConstructor: Jimp.constructor.name,
         JimpMethods: Object.getOwnPropertyNames(Jimp).slice(0, 10)
       });
       
@@ -146,8 +145,8 @@ export async function POST(request: NextRequest) {
 
       // Convert to JPEG format for AWS Rekognition compatibility
       console.log('🔄 Converting to JPEG...');
-      console.log('🔍 Jimp.MIME_JPEG:', Jimp.MIME_JPEG);
-      faceBuffer = await jimpImage.quality(90).getBufferAsync(Jimp.MIME_JPEG);
+      console.log('🔍 MIME_JPEG:', 'image/jpeg');
+      faceBuffer = await jimpImage.quality(90).getBufferAsync('image/jpeg');
       
       console.log('✅ Face photo processed successfully:', {
         originalType: facePhoto.type,
@@ -231,7 +230,7 @@ export async function POST(request: NextRequest) {
       const storedJimpImage = await Jimp.Jimp.fromBuffer(storedFaceArrayBuffer);
       
       // Convert to JPEG format for AWS Rekognition compatibility
-      storedFaceBuffer = await storedJimpImage.quality(90).getBufferAsync(Jimp.Jimp.MIME_JPEG);
+      storedFaceBuffer = await storedJimpImage.quality(90).getBufferAsync('image/jpeg');
       
       console.log('✅ Stored face photo processed successfully:', {
         storedSize: storedFaceBuffer.length,
