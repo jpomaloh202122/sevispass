@@ -87,6 +87,17 @@ const nextConfig: NextConfig = {
     // Optimize package imports for better build performance
     optimizePackageImports: ['@supabase/supabase-js'],
   },
+  // Configure external modules for serverless deployment
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push({
+        canvas: 'canvas',
+        sharp: 'sharp',
+      });
+    }
+    return config;
+  },
   // Set explicit turbopack root to prevent workspace inference warnings
   turbopack: {
     root: 'C:\\Users\\pomal\\sevispassv1\\sevispass'
