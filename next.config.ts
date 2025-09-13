@@ -5,6 +5,8 @@ const withPWA = require('next-pwa')({
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
   buildExcludes: [/middleware-manifest.json$/],
+  scope: '/',
+  sw: 'sw.js',
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/fonts\.googleapis\.com/,
@@ -77,7 +79,6 @@ const withPWA = require('next-pwa')({
 });
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
   eslint: {
     // Warning: This allows production builds to successfully complete even if
     // your project has ESLint errors.
